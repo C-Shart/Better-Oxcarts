@@ -140,15 +140,3 @@ sdk.hook(
     end,
     nil
 )
-
-
-
--- DONE ~~TODO: Ox/cart invincibility is set automatically, or any damage to the cart is interrupted.~~
--- DONE ~~TODO: Driver/guard invincibility~~
--- TODO: Guard buffs (advanced abilities, buffed stats)
--- TODO: Driver behavior alteration (join fights, add player classes/abilities)
--- TODO: Driver appearance alteration (glowing eyes in combat, see about using the Medusa glare for this)
--- TODO: Driver BGM (nuDoom music plays when drivers get into fight)
--- TODO: Faster ox
--- TODO: User configurability
--- TODO: Option - much faster cart outside of combat, play yakety sax
