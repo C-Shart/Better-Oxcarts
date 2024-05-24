@@ -1,5 +1,4 @@
 ## NOW
-+ "set invincible" logic to its own function
 + Set cart parts invincible too (app.Gm80_042.PartsList[], app.Sm80_042_Parts.CompHit.IsInvincible)
 + BUG: Game loads same oxcart & guards
     + Find a way to refresh the cart. Finding this should enable me to also allow cart configuration
@@ -18,5 +17,4 @@
 + Option - much faster cart outside of combat, play yakety sax
  
 ### DONE
-+ Ox/cart invincibility is set automatically, or any damage to the cart is interrupted.
-+ Driver/guard invincibility
++ "set invincible" logic to its own function

@@ -61,7 +61,8 @@ local function has_character_id(tbl, val)
         end        
     end        
     return false
-end        
+end
+
 
 -- Hooks registNPC and checks if the character is in top_char_ids, then sets invuln if so.
 sdk.hook(
@@ -74,7 +75,7 @@ sdk.hook(
                 local char_hitctrl = char["<Hit>k__BackingField"]
                 local is_char_invuln = char_hitctrl["<IsInvincible>k__BackingField"]
                 --print(" --inv : " .. tostring(is_char_invuln))
-
+                
                 if is_char_invuln ~= true then
                     char_hitctrl:set_field("<IsInvincible>k__BackingField", true)
                     --print(" --inv : " .. tostring(char_hitctrl["<IsInvincible>k__BackingField"]))
@@ -85,20 +86,25 @@ sdk.hook(
     end        
 )        
 
+-- Makes things invincible
+local function make_invincible(obj)
+    local obj_hit_ctrl = obj["<Hit>k__BackingField"]
+    if obj_hit_ctrl then
+        local is_invincible = obj_hit_ctrl["<IsInvincible>k__BackingField"]
+        if is_invincible ~= true then
+            obj_hit_ctrl:set_field("<IsInvincible>k__BackingField", true)
+        end
+    end
+end
+
 -- Does what it says on the tin
 local function make_ox_and_cart_invincible(oxobj)
     this_ox_id = 0
     local ox_object = sdk.to_managed_object(oxobj)
     if ox_object then
-        local oxCharaField = ox_object["<Chara>k__BackingField"]
-        this_ox_id = oxCharaField["CharacterID"]
-        local oxHitCtrl = oxCharaField["<Hit>k__BackingField"]
-        if oxHitCtrl then
-            local mmIsInvincible = oxHitCtrl["<IsInvincible>k__BackingField"]
-            if mmIsInvincible ~= true then
-                oxHitCtrl:set_field("<IsInvincible>k__BackingField", true)
-            end
-        end
+        local ox_character = ox_object["<Chara>k__BackingField"]
+        this_ox_id = ox_character["CharacterID"]
+        make_invincible(ox_character)
     end
 end
 
@@ -108,7 +114,9 @@ local function make_driver_and_guards_invincible(oid)
     local driver_field = oxcart_status["DriverID"]
     local driver_id = driver_field.CharaID
     local driver = _NPCManager:getCharacter(driver_id)
-    if not driver then
+    if driver then
+        make_invincible(driver)
+    else
         table.insert(top_char_ids, driver_id)
     end
 
@@ -121,11 +129,7 @@ local function make_driver_and_guards_invincible(oid)
                 table.insert(top_char_ids, guard)
             else
                 local guard_char = _NPCManager:getCharacter(guard)
-                local guard_hitctrl = guard_char["<Hit>k__BackingField"]
-                local is_guard_invuln = guard_hitctrl["<IsInvincible>k__BackingField"]
-                if is_guard_invuln ~= true then
-                    guard_hitctrl:set_field("<IsInvincible>k__BackingField", true)
-                end
+                make_invincible(guard_char)
             end
         end
     end
