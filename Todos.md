@@ -28,7 +28,10 @@ app.OxcartManager.getSchedule()
                   getStatus(oxcart id)
 
 app.Oxcartstatus.setDriver
+                    args[3] (characterID)
                 .addGuard()
+                    args[3] (characterID)
+
 
 app.Character:
     app.CharacterInput                  <Input>k__BackingField
