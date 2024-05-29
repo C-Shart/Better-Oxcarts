@@ -1,4 +1,6 @@
 ## NOW
++ User configurability
+    + UI
 + BUG: Game loads same oxcart & guards
     + Find a way to refresh the cart. Finding this should enable me to also allow cart configuration
 + BUG: Wandering too far from cart makes cart fall apart & disappear
@@ -9,8 +11,6 @@
 + Faster ox
 + Guard buffs (advanced abilities, buffed stats, better equipment)
 + Ox buffs (buffed stats)
-+ User configurability
-    + UI
  
 ## LATER
 + Driver behavior alteration (join fights, add player classes/abilities)
