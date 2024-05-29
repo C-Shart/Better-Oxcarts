@@ -1,9 +1,6 @@
-require "tools"
-
 local modname="[BetterOxcarts]"
 
 local _NPCManager = sdk.get_managed_singleton("app.NPCManager")
-local top_char_ids = {}
 local this_ox_id = 0
 
 -- 05/14 I don't think I need this anymore actually?
@@ -90,6 +87,21 @@ sdk.hook(
     end
 )
 
+-- Takes the cart parts and makes them invincible
+sdk.hook(
+    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("start"),
+    function(args)
+        local this_part = sdk.to_managed_object(args[2])
+        local part_hitctrl = this_part["<CompHitCtrl>k__BackingField"]
+        if part_hitctrl then
+            local is_invincible = part_hitctrl["<IsInvincible>k__BackingField"]
+            if is_invincible ~= true then
+                part_hitctrl:set_field("<IsInvincible>k__BackingField", true)
+            end
+        end
+    end
+)
+
 -- Hooks methods to avoid the cart and its parts taking damage
 sdk.hook(
     sdk.find_type_definition("app.Gm80_042"):get_method("onDamageHit"),
@@ -110,35 +122,6 @@ sdk.hook(
 sdk.hook(
     sdk.find_type_definition("app.Sm80_042_Parts"):get_method("callbackDamageHit"),
     skip_execution
-)
-
--- Takes the cart parts and makes them invincible
- sdk.hook(
-    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("start"),
-    function(args)
-        local this_part = sdk.to_managed_object(args[2])
-        local part_hitctrl = this_part["<CompHitCtrl>k__BackingField"]
-        if part_hitctrl then
-            local is_invincible = part_hitctrl["<IsInvincible>k__BackingField"]
-            if is_invincible ~= true then
-                part_hitctrl:set_field("<IsInvincible>k__BackingField", true)
-            end
-        end
-    end
-)
-
--- Hooks registNPC and checks if the character is in top_char_ids, then sets invuln if so.
-sdk.hook(
-    _NPCManager:get_type_definition():get_method("registNPC"),
-    function(args)
-        if #top_char_ids > 0 then
-            npc_object = sdk.to_managed_object(args[3])
-            if has_character_id(top_char_ids, npc_object["CharacterID"]) then
-                make_invincible(npc_object)
-                table.remove(top_char_ids, top_cids_index)
-            end
-        end
-    end
 )
 
 -- REMOVE ON RELEASES
