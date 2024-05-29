@@ -3,12 +3,14 @@
     + Find a way to refresh the cart. Finding this should enable me to also allow cart configuration
 + BUG: Wandering too far from cart makes cart fall apart & disappear
     + Making the cart truly invincible & unbroken should resolve this
+    + Also ensuring the cart is fresh when loaded
 
 ## SOON
 + Faster ox
 + Guard buffs (advanced abilities, buffed stats, better equipment)
 + Ox buffs (buffed stats)
 + User configurability
+    + UI
  
 ## LATER
 + Driver behavior alteration (join fights, add player classes/abilities)

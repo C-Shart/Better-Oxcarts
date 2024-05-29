@@ -4,16 +4,6 @@ local _NPCManager = sdk.get_managed_singleton("app.NPCManager")
 local top_char_ids = {}
 local this_ox_id = 0
 
--- Hotkeys for testing
---[[
-local hotkey_config = {}
-hotkey_config.Hotkeys = {
-    ["OxcartStatus"] = "I"
-}
-hotkeys.setup_hotkeys(hotkey_config.Hotkeys)
-]]
-
-
 -- 05/14 I don't think I need this anymore actually?
 -- 05/16 Keeping it until I'm positive I don't need it for anything anymore
 -- Creates an enum of all Character IDs and stores it
@@ -67,11 +57,11 @@ end
 sdk.hook(
     sdk.find_type_definition("app.Ch299003"):get_method("connectOxcart"),
     function(args)
-        --this_ox_id = 0
+        this_ox_id = 0
         local ox_object = sdk.to_managed_object(args[2])
         if ox_object then
             local ox_character = ox_object["<Chara>k__BackingField"]
-            --this_ox_id = ox_character["CharacterID"]
+            this_ox_id = ox_character["CharacterID"]
             make_invincible(ox_character)
         end
     end,
@@ -148,42 +138,3 @@ sdk.hook(
         end
     end
 )
-
-local function get_oxcart_status(oid)
-    local status = _NPCManager["OxcartManager"]:getStatus(oid)
-
-    ----- CHANGE
-    local driver_field = oxcart_status["DriverID"]
-    local driver_id = driver_field.CharaID
-    local driver = _NPCManager:getCharacter(driver_id)
-    if driver then
-        make_invincible(driver)
-    else
-        table.insert(top_char_ids, driver_id)
-    end
-
-    local guards_list = oxcart_status["_Guards"]
-    local guards_length = guards_list._items:get_size()
-    for i=0, guards_length do
-        if guards_list[i] then
-            local guard = guards_list[i].CharaID
-            if not _NPCManager:getCharacter(guard) then
-                table.insert(top_char_ids, guard)
-            else
-                local guard_char = _NPCManager:getCharacter(guard)
-                make_invincible(guard_char)
-            end
-        end
-    end
-end
-
---[[
-re.on_application_entry("LateUpdateBehavior", function()
-    if hotkeys.check_hotkey("OxcartStatus", true, false) then
-        print("")
-        print("==== OXCART STATUS ====")
-        get_oxcart_status(this_ox_id)
-    end
-end
-) 
-]]
