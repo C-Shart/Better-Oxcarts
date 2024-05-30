@@ -61,6 +61,73 @@ local function make_invincible(obj)
     end
 end
 
+local function make_cart_and_parts_invincible()
+    print("")
+    print("!!!!!!!!!!!! TESTING PARTS")
+    local gimmicks_list = sdk.get_managed_singleton("app.GimmickManager")["<ManagedGimmicks>k__BackingField"]
+    local g_mgr_items = gimmicks_list._items
+    local g_mgr_size = gimmicks_list._size
+    local parts_list_size = 0
+    local comp_hit_isinvinc = nil
+    local hit_ctrl_isinvinc = nil
+
+    for i=0,g_mgr_size-1 do
+        local item_name = g_mgr_items[i]:get_type_definition():get_name()
+        local parts_check = item_name == "Sm80_042_Parts" or item_name == "Gm80_042"
+        if parts_check then
+            local comp_hit_isinvinc = nil
+            local hit_ctrl_isinvinc = nil
+            local parts_list_size = nil
+
+            local has_cage = g_mgr_items[i].HasCage
+            local parts_list = g_mgr_items[i].PartsList
+            if parts_list then
+                parts_list_items = parts_list._items
+                parts_list_size = parts_list._size
+                end
+            local gimmick_id = g_mgr_items[i].GimmickId
+            local comp_hit = g_mgr_items[i].CompHit
+            if comp_hit then
+                if comp_hit["<IsInvincible>k__BackingField"] == false then
+                    g_mgr_items[i].CompHit["<IsInvincible>k__BackingField"] = true
+                end
+            end
+            local hit_ctrl = g_mgr_items[i]["<CompHitCtrl>k__BackingField"]
+            if hit_ctrl then
+                if hit_ctrl["<IsInvincible>k__BackingField"] == false then
+                    g_mgr_items[i]["<CompHitCtrl>k__BackingField"]["<IsInvincible>k__BackingField"] = true
+                end
+            end
+            local unique_id = g_mgr_items[i]["<UniqId>k__BackingField"]._Index
+            local is_unbreak = g_mgr_items[i]._IsUnbreakable
+            if is_unbreak == false then
+                g_mgr_items[i]:set_IsUnbreakable(true)
+            end
+
+            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            print("!!!!!!!!!!!! PART FOUND!  " .. tostring(item_name))
+            if has_cage then print("!!!!!!!!!!!! HasCage  : " .. tostring(has_cage)) end
+            if parts_list then print("!!!!!!!!!!!! PartsList: " .. tostring(parts_list)) end
+            if parts_list then print("!!!!!!!!!!!! ---  Size: " .. tostring(parts_list_size)) end
+            if gimmick_id ~= 0 then print("!!!!!!!!!!!! GimmickId: " .. tostring(gimmick_id)) end
+            if comp_hit then print("!!!!!!!!!!!! CompHit  : " .. tostring(comp_hit)) end
+            if comp_hit then print("!!!!!!!!!!!! ---Invinc: " .. tostring(g_mgr_items[i].CompHit["<IsInvincible>k__BackingField"])) end
+            if hit_ctrl then print("!!!!!!!!!!!! CompHitBF: " .. tostring(hit_ctrl)) end
+            if hit_ctrl then print("!!!!!!!!!!!! ---Invinc: " .. tostring(g_mgr_items[i]["<CompHitCtrl>k__BackingField"]["<IsInvincible>k__BackingField"])) end
+            if unique_id ~= 0 then print("!!!!!!!!!!!! UNIQUE ID: " .. tostring(unique_id)) end
+            print("!!!!!!!!!!!! UNBREAK  : " .. tostring(is_unbreak))
+        end
+    end
+end
+
+
+
+
+
+
+
+
+
 local function make_driver_and_guards_invincible(oid)
     local oxcart_status = _NPCManager["OxcartManager"]:getStatus(oid)
     local driver_field = oxcart_status["DriverID"]
@@ -87,6 +154,11 @@ local function make_driver_and_guards_invincible(oid)
     end
 end
 
+
+-----------
+-- HOOKS --
+-----------
+
 -- Hooks Ch299003.connectOxcart and makes ox invincible
 sdk.hook(
     sdk.find_type_definition("app.Ch299003"):get_method("connectOxcart"),
@@ -105,61 +177,9 @@ sdk.hook(
             make_driver_and_guards_invincible(this_ox_id)
         end
         -- Make cart invincible/unbreakable
-        -- TODO: CART OBJECT INVINCIBILITY AND OTHER SETTINGS RIGHT FUCKIN HERE
-        if cart_object then
-            print("")
-            print("CART OBJECT CART OBJECT CART OBJECT")
-            print(cart_object["<UniqId>k__BackingField"]._Index)
-            print(cart_object.HasCage)
-            print(cart_object._IsUnbreakable)
-            if cart_object._IsUnbreakable ~= true then
-                cart_object._IsUnbreakable = true
-                print(cart_object._IsUnbreakable)
-            end
-        end
+        --make_cart_and_parts_invincible()
     end,
     nil
-)
-
------------
--- HOOKS --
------------
-
--- Hooks the cart parts and makes them invincible, supposedly
-sdk.hook(
-    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("start"),
-    function(args)
-        local this_part = sdk.to_managed_object(args[2])
-        local part_hitctrl = this_part["<CompHitCtrl>k__BackingField"]
-        if part_hitctrl then
-            local is_invincible = part_hitctrl["<IsInvincible>k__BackingField"]
-            if is_invincible ~= true then
-                part_hitctrl:set_field("<IsInvincible>k__BackingField", true)
-            end
-        end
-    end
-)
-
--- Hooks methods to avoid the cart and its parts taking damage
-sdk.hook(
-    sdk.find_type_definition("app.Gm80_042"):get_method("onDamageHit"),
-    skip_execution()
-)
-sdk.hook(
-    sdk.find_type_definition("app.Gm80_042"):get_method("onCalcDamageEnd"),
-    skip_execution()
-)
-sdk.hook(
-    sdk.find_type_definition("app.Gm80_042"):get_method("executeBreak"),
-    skip_execution()
-)
-sdk.hook(
-    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("executeBreak"),
-    skip_execution()
-)
-sdk.hook(
-    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("callbackDamageHit"),
-    skip_execution()
 )
 
 -- Hooks registNPC and checks if the character is in top_char_ids, then sets invuln if so.
@@ -203,38 +223,27 @@ sdk.hook(
 )
  ]]
 
---Hook app.GimmickManager.registerGimmick and check for cart+parts
+-- Hooks methods to avoid the cart and its parts taking damage
 sdk.hook(
-    sdk.find_type_definition("app.GimmickManager"):get_method("register"),
-    function(args)
-        local gm_base = sdk.to_managed_object(args[3])
-
-        if gm_base.GimmickId == 124 then
-            local hitctrl = gm_base["<CompHitCtrl>k__BackingField"]
-            local isinvinc = hitctrl["<IsInvincible>k__BackingField"]
-            local parent_cart = gm_base["<ParentId>k__BackingField"]
-            local unbreakable = gm_base._IsUnbreakable
-
-            print("===== GimmickManager.register check =====")
-            print("ID CHECK : " .. tostring(gm_base.GimmickId))
-            print("HITCTRL  : " .. tostring(hitctrl))
-            print("INVINCIBL: " .. tostring(isinvinc))
-            print("PRNT CART: " .. tostring(parent_cart))
-            print("UNBREAK  : " .. tostring(unbreakable))
-            print("")
-            if isinvinc ~= true then
-                hitctrl["<IsInvincible>k__BackingField"] = true
-                print("INVINCIBL: " .. tostring(hitctrl["<IsInvincible>k__BackingField"]))
-            end
-            if unbreakable ~= true then
-                gm_base._IsUnbreakable = true
-                print("UNBREAK  : " .. tostring(gm_base._IsUnbreakable))
-            end
-            print("=========================================")
-        end
-    end
+    sdk.find_type_definition("app.Gm80_042"):get_method("onDamageHit"),
+    skip_execution()
 )
-
+sdk.hook(
+    sdk.find_type_definition("app.Gm80_042"):get_method("onCalcDamageEnd"),
+    skip_execution()
+)
+sdk.hook(
+    sdk.find_type_definition("app.Gm80_042"):get_method("executeBreak"),
+    skip_execution()
+)
+sdk.hook(
+    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("executeBreak"),
+    skip_execution()
+)
+sdk.hook(
+    sdk.find_type_definition("app.Sm80_042_Parts"):get_method("callbackDamageHit"),
+    skip_execution()
+)
 
 
 
@@ -252,7 +261,8 @@ local hotkeys = require("Hotkeys/Hotkeys")
 
 local hotkey_config = {}
 hotkey_config.Hotkeys = {
-    ["OxcartStatus"] = "I"
+    ["OxcartStatus"] = "I",
+    ["PartsChecker"] = "O"
 }
 hotkeys.setup_hotkeys(hotkey_config.Hotkeys)
 
@@ -308,6 +318,9 @@ re.on_application_entry("LateUpdateBehavior",
     function()
         if hotkeys.check_hotkey("OxcartStatus", true, false) then
             get_oxcart_status(this_ox_id)
+        end
+        if hotkeys.check_hotkey("PartsChecker", true, false) then
+            make_cart_and_parts_invincible()
         end
     end
     )
