@@ -28,11 +28,32 @@
 
 ### NOTES
 
-Destination & _BoardingRouteNumber
-    1: Vernworth
-    2: Checkpoint Rest Town
-    3: Melve
-    4: Bakbattah
+_IsUnbreakable                  0x200
+RegionData                      0x258
+<IsInvincible>k__BackingField   0x132
+<CompHitCtrl>k__BackingField    0xC0
+
+Destinations
++ 1: Vernworth
++ 2: Checkpoint Rest Town
++ 3: Melve
++ 4: Bakbattahl
+
+Dest + _BoardingRouteNumber combos
++ Use to determine guard loadouts
++ E-W
+    + 3,1 Melve-Vernworth (lightest.M)
+    + 1,2 Vernworth-Checkpoint (medium.V)
+    + 2,4 Checkpoint-Bakbattahl (heavy.C)
++ W-E
+    + 4,2 Bakbattahl-Checkpoint (heaviest.B)
+    + 2,1 Checkpoint-Vernworth (medium.C)
+    + 1,3 Vernworth-Melve (light.V)
+
+app.GimmickManager
+
+    ["<ManagedGimmicks>k__BackingField"]._items
+
 
 app.OxcartConnecter
     .getOxcartGimmickID(app.CharacterID)
@@ -167,4 +188,26 @@ sdk.hook(
             if not no_recover_flag then return end
             return sdk.PreHookResult.SKIP_ORIGINAL
         end
+)
+
+
+
+
+
+
+
+
+
+-- Hooks the cart itself because OxcartAI.update() apparently sets the cart breakable always
+-- unless you're paused
+sdk.hook(
+    sdk.find_type_definition("app.GimmickBase"):get_method("set_IsUnbreakable"),
+    function(args)
+        local bool = nil
+        local obj = sdk.to_managed_object(args[2])
+        if obj:get_type_definition():get_name() == "Gm80_042" then
+            bool = sdk.to_ptr(args[3])
+            bool = true
+        end
+    end
 )
