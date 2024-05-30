@@ -11,6 +11,9 @@
 + Faster ox
 + Guard buffs (advanced abilities, buffed stats, better equipment)
 + Ox buffs (buffed stats)
++ BUG: Sm_80_042_Parts not completely being set invincible yet
+    + Find way to iterate through the current cart's PartsList
+
  
 ## LATER
 + Driver behavior alteration (join fights, add player classes/abilities)
@@ -23,16 +26,87 @@
 + Set cart parts invincible too (app.Gm80_042.PartsList[], app.Sm80_042_Parts.CompHit.IsInvincible)
 
 
+### NOTES
+
+Destination & _BoardingRouteNumber
+    1: Vernworth
+    2: Checkpoint Rest Town
+    3: Melve
+    4: Bakbattah
+
+app.OxcartConnecter
+    .getOxcartGimmickID(app.CharacterID)
+    .getOxcartUniqueID(app.CharacterID)
+    ["OxcartCharaIDArray"]
+    ["_OxcartUniqueID"]
+    ["_Oxcart"]
+
+app.OxcartConnecter.requestOxcart()
+    ._Oxcart
+        ._GameObject._Name
+    ._OxcartUniqueID._Index
+
+app.Gm80_042
+    .IsSetup
+    .HasCage
+    ._IsUnbreakable == true
+    .GimmickId == 124
+    ["<UniqId>k__BackingField"]._Index
+
+app.Sm80_042_Parts (app.Gm80_042.PartsList)
+
+app.GimmickManager
+    .register(app.GimmickBase gimmick)
+app.GimmickBase
+    ["GimmickId"] == 124
+    ["<CompHitCtrl>k__BackingField"]
+        ["<IsInvincible>k__BackingField"] == true
+    ["<UniqId>k__BackingField"] (app.UniqueID)
+    app.Gm80_042["<ParentId>k__BackingField"] == OxcartStatus.OxcartID
+        -- app.GimmickBase.<UniqId>k__BackingField = app.UniqueID
 
 
-app.OxcartManager.getSchedule()
-                  getOxcartStatusfromAssign()
-                  getStatus(oxcart id)
 
-app.Oxcartstatus.setDriver
-                    args[3] (characterID)
-                .addGuard()
-                    args[3] (characterID)
+app.OxcartStatus
+    .registerOxcart(app.CharacterID oxcart, app.OxcartAI obj, System.Boolean IsDummyUpdate)
+    .registerOxcart(app.CharacterID oxcart, app.DummyDataOxcart obj)
+    .setScheduleState_Oxcart()
+    .getDestinationID()
+    .get_oxcartAI()
+    .set_oxcartAI(app.OxcartAI value)
+    Route
+    <oxcartAI>k__BackingField
+
+
+app.OxcartManager
+    .getSchedule()
+    .getOxcartStatusfromAssign()
+    .getStatus(oxcart id)
+    .getSchedule(app.CharacterID charaID)
+    .getSchedule_BaseInfo(app.CharacterID)
+    .setSchedule(app.CharacterID, app.OxcartSchedule)
+
+app.OxcartSchedule
+    OxcartBaseInfos
+    Routes
+    Members
+
+app.OxcartCondition
+    .Evaluate()
+
+app.OxcartUtil
+    .getOxcartStatus(app.CharacterID oxcartID)
+    .getOxcartStatus_AssignCharacterID(app.ChracterID)
+    .getOxcartScheduleData()
+    .getOxcartStatus_Entity()
+    .getStatusList()
+
+app.NPCManager
+    .setScheduleState_Oxcart(app.CharacterID, app.OxcartStatus)
+
+
+app.OxcartAI
+    ["DriverAction"]
 
 
 app.Character:
@@ -66,19 +140,15 @@ app.NPCManager:
     .getNPCCharacterData()
     .setupCharacterData()
 
-app.Ch299003:
+app.Ch299003
     ["RunRate"]
     ["MotSpeedMax"]
     ["MotSpeedMin"]
-
-app.OxcartUtil
-    getOxcartStatus(app.CharacterID)
-    getOxcartStatus_AssignCharacterID(app.ChracterID)
-    getOxcartScheduleData
-    getOxcartStatus_Entity
-
-app.OxcartAI
-app.OxcartAI.DriverAction
+    .setNoDieFlag(bool)
+    app.Ch299
+        app.Ch200000
+            <Chara>k__BackingField
+            <Monster>k__BackingField
 
 
 app.Gm80_042
