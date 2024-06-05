@@ -240,47 +240,6 @@ sdk.hook(parts_typedef:get_method("executeBreak"), skip_execution)
 sdk.hook(parts_typedef:get_method("callbackDamageHit"), skip_execution)
 
 
---[[ 
--- Hooks OxcartConnecter.requestOxcart and try to change cart properties
-sdk.hook(
-    sdk.find_type_definition("app.OxcartConnecter"):get_method("requestOxcart"),
-    function(args)
-        local connector_object = sdk.to_managed_object(args[3])
-        local monster = connector_object._Monster
-        local oxcart = connector_object._Oxcart
-        local is_connected = connector_object._IsConnected
-        local is_loaded = connector_object._IsLoadedOxcart
-        local unique_id = connector_object._OxcartUniqueID._Index
-
-        if connector_object and monster and unique_id then
-            print("")
-            print("===== OxcartConnecter.requestOxcart check =====")
-            print("MONSTER : " .. tostring(monster["<Chara>k__BackingField"].CharaIDContext.CharacterID))
-            print("OXCART  : " .. tostring(oxcart))
-            print("CONNECTD: " .. tostring(is_connected))
-            print("LOADED  : " .. tostring(is_loaded))
-            print("OC UNQID: " .. tostring(unique_id))
-            print("===============================================")
-            print("")
-        end
-    end
-)
-
--- Commenting out temporarily until I can figure out what I want to do with this, if anything.
--- The args for is_connected and is_loaded seem to be false in 100% of calls
--- Need to figure out where else to check those, or if it's even important to
-
-Example:
-===== OxcartConnecter.requestOxcart check =====
-MONSTER : 369023852
-OXCART  : nil
-CONNECTD: false
-LOADED  : false
-OC UNQID: 369023976
-===============================================
- ]]
-
-
 
 sdk.hook(
     sdk.find_type_definition("app.DamageCalculator"):get_method("setup"),
