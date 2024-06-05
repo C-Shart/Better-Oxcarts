@@ -1,0 +1,73 @@
+{
+    "equip_tables": {
+      "Fighter": {
+        "Melve": {
+            "l_wep": {},
+            "r_wep": {},
+            "head": {},
+            "face": {},
+            "chest": {},
+            "body": {},
+            "pants": {},
+            "cloak": {},
+            "ring_l": {},
+            "ring_r": {},
+            "items": [
+                {}
+            ]
+        },
+        "Vernworth": {},
+        "CheckVern": {},
+        "CheckBak": {},
+        "Bakbattahl": {}
+      },
+      "Archer": {
+        "Melve": {},
+        "Vernworth": {},
+        "CheckVern": {},
+        "CheckBak1": {},
+        "CheckBak2": {},
+        "Bakbattahl": {}
+      },
+      "Mage": {
+        "Melve": {},
+        "Vernworth": {},
+        "CheckVern": {},
+        "Bakbattahl": {}
+      },
+      "Warrior": {
+        "Melve": {},
+        "VernCheck": {}
+      },
+      "Sorceror": {
+        "Bakbattahl": {}
+      }
+    },
+    "stat_tables": {
+        "Fighter": {
+            "dmg_calc": {},
+            "rd_01": {},
+            "rd_02": {}
+        },
+        "Archer": {
+            "dmg_calc": {},
+            "rd_01": {},
+            "rd_02": {}
+        },
+        "Mage": {
+            "dmg_calc": {},
+            "rd_01": {},
+            "rd_02": {}
+        },
+        "Warrior": {
+            "dmg_calc": {},
+            "rd_01": {},
+            "rd_02": {}
+        },
+        "Sorceror": {
+            "dmg_calc": {},
+            "rd_01": {},
+            "rd_02": {}
+        }
+    }
+}
