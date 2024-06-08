@@ -2,7 +2,7 @@ local modname="[BetterOxcarts]"
 
 local _NPCManager = sdk.get_managed_singleton("app.NPCManager")
 local _CharacterListHolder = sdk.get_managed_singleton("app.CharacterListHolder")
-local _ItemManager = sdk.get_managed_singleton('app.AppSingleton`1<app.ItemManager>')
+local _ItemManager = sdk.get_managed_singleton("app.ItemManager")
 
 local top_char_ids = {}
 local this_ox_id = 0
@@ -122,6 +122,37 @@ local function make_invincible(obj)
         print(" - IsInvinc : " .. tostring(obj_hit_ctrl["<IsInvincible>k__BackingField"]))
     end
 end
+
+
+local function equip_guard(char, charID)
+    print(": Owner  : " .. tostring(charID))
+
+    local owning_human = char["<Human>k__BackingField"]
+    local equip_list = _ItemManager:getEquipData(charID):get_EquipList()
+
+    -- Unequip current left/right weapons
+    if equip_list[0]._StorageId > 0 then
+        _ItemManager:removeEquipNoLock(_ItemManager:getStorageDataByStorageId(equip_list[0]._StorageId), char, false, true)
+    end
+    -- Arctal claims the game doesn't unequip shields per comments in Simple Weapon Swap, and I believe them
+    -- However, archers seem to be lefties
+    if equip_list[1]._StorageId > 0 then
+        _ItemManager:removeEquipNoLock(_ItemManager:getStorageDataByStorageId(equip_list[1]._StorageId), char, false, true)
+    end
+
+
+ -- Equip the appropriate weapon IDs
+    -- Replace with logic that checks against the stat/equip tables as appropriate
+    -- Expand to armor unless better done elsewhere
+    if charID == "ch300802" then
+        _ItemManager:requestRightEquipWeapon(char, wep_ids["wp00_050_00"], false)
+    elseif charID == "ch300803" then
+        _ItemManager:requestLeftEquipWeapon(char, wep_ids["wp04_016_00"], false)
+    elseif charID == "ch300804" then
+        _ItemManager:requestRightEquipWeapon(char, wep_ids["wp07_011_00"], false)
+    end
+end
+
 
 local function make_cart_and_parts_invincible()
     local gimmicks_list = sdk.get_managed_singleton("app.GimmickManager")["<ManagedGimmicks>k__BackingField"]
@@ -302,7 +333,7 @@ sdk.hook(
     _NPCManager:get_type_definition():get_method("registNPC"),
     function(args)
         if #top_char_ids > 0 then
-            npc_object = sdk.to_managed_object(args[3])
+            local npc_object = sdk.to_managed_object(args[3])
             if has_character_id(top_char_ids, npc_object["CharacterID"]) then
                 --make_invincible(npc_object)
                 --buff_guards(npc_object)
@@ -330,57 +361,11 @@ sdk.hook(
         local owning_char = weapon_item_hodler.Owner
         local owning_char_id = tostring(char_ids[owning_char.CharacterID])
         local is_oxcart_guard = is_value_in_table(top_guards, owning_char_id)
-        
-        if is_oxcart_guard then
-            local owning_human = owning_char["<Human>k__BackingField"]
-            local dragons_dogma_id = wep_ids["wp00_007_00"]
 
+        if is_oxcart_guard then
             print()
             print(":::::: EquipItemController ::::::")
-            print(": Owner  : " .. tostring(owning_char_id))
-
-
-            --local job_10_mgr = owning_human:get_Job10WeaponManager()
-            local equip_list = _ItemManager:getEquipData(owning_char_id):get_EquipList()
-            local job = owning_human:get_JobContext():get_field("CurrentJob")
-            
-            --print(": Job10Mg: " .. tostring(job_10_mgr))
-            print(": EquipLs: " .. tostring(equip_list))
-            for i=0,equip_list:get_size() do
-                if equip_list[i] then
-                    item = _ItemManager:getStorageDataByStorageId(equip_list[i]._StorageId)
-                    print(": " .. tostring(sdk.to_int64(item.data)))
-                    print()
-                end
-            end
-            --print(": Job    : " .. tostring(job))
-            print(":::::::::::::::::::")
-
---[[ 
-            if equip_list[0]._StorageId > 0 then
-                _ItemManager:removeEquipNoLock(_ItemManager:getStorageDataByStorageId(equip_list[0]._StorageId), owning_char, false, true)
-            end
-            if equip_list[1]._StorageId > 0 then
-                _ItemManager:removeEquipNoLock(_ItemManager:getStorageDataByStorageId(equip_list[1]._StorageId), owning_char, false, true)
-            end
-]]
-
---[[ 
-            if rightItemID > 0 then
-                _ItemManager:setEquipDataNoLock(_ItemManager:getStorageDataByStorageId(rightItemID), ManualPlayer, 0, true)
-            end
-]]
-
-
-            -- Equip the appropriate weapon IDs
-            --_ItemManager:requestRightEquipWeapon(owning_char, dragons_dogma_id, false)
-            --_ItemManager:requestLeftEquipWeapon(owning_char, leftWeaponID, false)
-
-            print(": Left Wp: " .. tostring(rt_wep_obj))
-            print(": RightWp: " .. tostring(lt_wep_obj))
-            print(":::::::::::::::::::")
-            print()
-
+            equip_guard(owning_char, owning_char_id)
         end
     end
 )
