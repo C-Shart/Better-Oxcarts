@@ -1,6 +1,9 @@
 local modname="[BetterOxcarts]"
 
 local _NPCManager = sdk.get_managed_singleton("app.NPCManager")
+local _CharacterListHolder = sdk.get_managed_singleton("app.CharacterListHolder")
+local _ItemManager = sdk.get_managed_singleton('app.AppSingleton`1<app.ItemManager>')
+
 local top_char_ids = {}
 local this_ox_id = 0
 -- All currently known (06/05) driver and guard IDs to tables.
@@ -58,6 +61,24 @@ local function generate_char_ids()
 end
 local char_ids = generate_char_ids()
 
+-- Creates an enum of all Weapon IDs
+local function generate_weapon_ids()
+    local weapon_ids = sdk.find_type_definition("app.WeaponID")
+    if not weapon_ids then return {} end
+    local fields = weapon_ids:get_fields()
+    local enum = {}
+    for i, field in ipairs(fields) do
+        local name = field:get_name()
+        local raw_value = field:get_data()
+        if raw_value then
+            enum[name] = raw_value
+        end
+    end
+    return enum
+end
+local wep_ids = generate_weapon_ids()
+
+
 -- Checks if character ID is in top_char_ids and sets index value if so
 local function has_character_id(tbl, val)
     for k,v in ipairs(tbl) do
@@ -79,14 +100,15 @@ local function is_value_in_table(tbl, val)
     return false
 end
 
---------------------
--- MAIN FUNCTIONS --
---------------------
-
 -- Skips execution of any hooked method.
 local function skip_execution(args)
     return sdk.PreHookResult.SKIP_ORIGINAL
 end
+
+
+--------------------
+-- MAIN FUNCTIONS --
+--------------------
 
 -- Takes an app.Character object and makes it invincible
 local function make_invincible(obj)
@@ -100,9 +122,6 @@ local function make_invincible(obj)
         print(" - IsInvinc : " .. tostring(obj_hit_ctrl["<IsInvincible>k__BackingField"]))
     end
 end
-
-
-
 
 local function make_cart_and_parts_invincible()
     local gimmicks_list = sdk.get_managed_singleton("app.GimmickManager")["<ManagedGimmicks>k__BackingField"]
@@ -154,8 +173,69 @@ end
 
 
 
+local function buff_guards()
+    --local hit_ctrl = char["<Hit>k__BackingField"]
+    local character_list = _CharacterListHolder.CharacterList
+    local cl_items = character_list._items
+    local cl_size = character_list._size
+
+    for i=0,cl_size-1 do
+        local char_name = tostring(char_ids[cl_items[i].CharacterID])
+        local is_guard = is_value_in_table(top_guards, char_name)
+        if is_guard then
+            print("! " .. tostring(char_name) .. " Manipulating HP?")
+
+            local human = cl_items[i]["<Human>k__BackingField"]
+            local params_backingfield = human["<Param>k__BackingField"].LVupInfoParam.DefaultParam
+            local parameters = human.Parameter.LVupInfoParam.DefaultParam
+        
+            print("!!  BUFFS")
+            local hp1 = parameters.Hitpoint
+            local hp2 = params_backingfield.Hitpoint
+            print("!!  HP1   : " .. tostring(hp1))
+            print("!!  HP2   : " .. tostring(hp2))
+
+            hp1 = 1000.0
+            hp2 = 1001.0
+
+            print("!!  HP1   : " .. tostring(hp1))
+            print("!!  HP2   : " .. tostring(hp2))
+            print("!!!!!!!!!!! ")
 
 
+            local region_data = cl_items[i]["<Hit>k__BackingField"].RegionData
+            local rstatus_1 = region_data[0]
+            local rstatus_2 = region_data[1]
+
+            rstatus_1.Hp = 25000
+            rstatus_1.MaxHp = 25000
+            rstatus_1.OldHp = 25000
+            rstatus_2.Hp = 20000
+            rstatus_2.MaxHp = 20000
+            rstatus_2.OldHp = 20000
+
+        end
+    end
+
+
+--[[ 
+    local human = char["<Human>k__BackingField"]
+    local params_backingfield = human["<Param>k__BackingField"].LVupInfoParam.DefaultParam
+    local parameters = human.Parameter.LVupInfoParam.DefaultParam
+
+    print("!!  BUFFS")
+    local hp1 = parameters.Hitpoint
+    local hp2 = params_backingfield.Hitpoint
+    print("!!  HP1   : " .. tostring(hp1))
+    print("!!  HP2   : " .. tostring(hp2))
+
+    hp1 = 1000.0
+    hp2 = 1001.0
+    print("!!  HP1   : " .. tostring(hp1))
+    print("!!  HP2   : " .. tostring(hp2))
+    print("!!!!!!!!!!! ")
+ ]]
+end
 
 local function make_driver_and_guards_invincible(oid)
     local oxcart_status = _NPCManager["OxcartManager"]:getStatus(oid)
@@ -177,7 +257,8 @@ local function make_driver_and_guards_invincible(oid)
                 table.insert(top_char_ids, guard)
             else
                 local guard_char = _NPCManager:getCharacter(guard)
-                make_invincible(guard_char)
+                --make_invincible(guard_char)
+                --buff_guards(guard_char)
             end
         end
     end
@@ -223,7 +304,8 @@ sdk.hook(
         if #top_char_ids > 0 then
             npc_object = sdk.to_managed_object(args[3])
             if has_character_id(top_char_ids, npc_object["CharacterID"]) then
-                make_invincible(npc_object)
+                --make_invincible(npc_object)
+                --buff_guards(npc_object)
                 table.remove(top_char_ids, top_cids_index)
             end
         end
@@ -240,54 +322,65 @@ sdk.hook(parts_typedef:get_method("executeBreak"), skip_execution)
 sdk.hook(parts_typedef:get_method("callbackDamageHit"), skip_execution)
 
 
-
-sdk.hook(
-    sdk.find_type_definition("app.DamageCalculator"):get_method("setup"),
-    function(args)
-        local char_name = tostring(sdk.to_managed_object(args[3]):get_Name())
-        local is_oxcart_guard = is_value_in_table(top_guards, char_name)
-        if is_oxcart_guard then
-            print(":::::: DamageCalculator ::::::")
-            print(char_name)
-            print(is_oxcart_guard)
-
-            local damage_calculator = sdk.to_managed_object(args[2])
-
-            -- Logic to apply new values based on criteria
-            local ch2 = damage_calculator["<Ch2>k__BackingField"]
-            local r_stat_ctrl = damage_calculator["<RegionStatusCtrl>k__BackingField"]
-            local attack = damage_calculator["<Attack>k__BackingField"]
-            local magic_attack = damage_calculator["<MagicAttack>k__BackingField"]
-            local react_attack = damage_calculator["<ReactionAttack>k__BackingField"]
-            local stam_attack = damage_calculator["<StaminaAttack>k__BackingField"]
-            local enchant_phys = damage_calculator["<EnchantPhsycalFactor>k__BackingField"]
-            local enchant_mag = damage_calculator["<EnchantMagicalFactor>k__BackingField"]
-            local defense = damage_calculator["<Defence>k__BackingField"]
-            local magic_defense = damage_calculator["<MagicDefence>k__BackingField"]
-        end
-    end
-)
-
-
+-- Hooks EquipItemController.setup to apply new values
 sdk.hook(
     sdk.find_type_definition("app.EquipItemController"):get_method("setup"),
     function(args)
-        local weapon_item_hodler = sdk.to_managed_object(args[4])                   -- typo but I'm leaving it
-        local owning_char = tostring(char_ids[weapon_item_hodler.Owner.CharacterID])
-        local is_oxcart_guard = is_value_in_table(top_guards, owning_char)
-
+        local weapon_item_hodler = sdk.to_managed_object(args[4])                 -- typo but I'm leaving it
+        local owning_char = weapon_item_hodler.Owner
+        local owning_char_id = tostring(char_ids[owning_char.CharacterID])
+        local is_oxcart_guard = is_value_in_table(top_guards, owning_char_id)
+        
         if is_oxcart_guard then
-            local lt_wep_obj = weapon_item_hodler["<LeftWeapon>k__BackingField"]
-            local rt_wep_obj = weapon_item_hodler["<RightWeapon>k__BackingField"]
+            local owning_human = owning_char["<Human>k__BackingField"]
+            local dragons_dogma_id = wep_ids["wp00_007_00"]
 
+            print()
             print(":::::: EquipItemController ::::::")
-            print(": Owner  : " .. tostring(owning_char))
-            print(": RightWp: " .. tostring(lt_wep_obj))
+            print(": Owner  : " .. tostring(owning_char_id))
+
+
+            --local job_10_mgr = owning_human:get_Job10WeaponManager()
+            local equip_list = _ItemManager:getEquipData(owning_char_id):get_EquipList()
+            local job = owning_human:get_JobContext():get_field("CurrentJob")
+            
+            --print(": Job10Mg: " .. tostring(job_10_mgr))
+            print(": EquipLs: " .. tostring(equip_list))
+            for i=0,equip_list:get_size() do
+                if equip_list[i] then
+                    item = _ItemManager:getStorageDataByStorageId(equip_list[i]._StorageId)
+                    print(": " .. tostring(sdk.to_int64(item.data)))
+                    print()
+                end
+            end
+            --print(": Job    : " .. tostring(job))
+            print(":::::::::::::::::::")
+
+--[[ 
+            if equip_list[0]._StorageId > 0 then
+                _ItemManager:removeEquipNoLock(_ItemManager:getStorageDataByStorageId(equip_list[0]._StorageId), owning_char, false, true)
+            end
+            if equip_list[1]._StorageId > 0 then
+                _ItemManager:removeEquipNoLock(_ItemManager:getStorageDataByStorageId(equip_list[1]._StorageId), owning_char, false, true)
+            end
+]]
+
+--[[ 
+            if rightItemID > 0 then
+                _ItemManager:setEquipDataNoLock(_ItemManager:getStorageDataByStorageId(rightItemID), ManualPlayer, 0, true)
+            end
+]]
+
+
+            -- Equip the appropriate weapon IDs
+            --_ItemManager:requestRightEquipWeapon(owning_char, dragons_dogma_id, false)
+            --_ItemManager:requestLeftEquipWeapon(owning_char, leftWeaponID, false)
+
             print(": Left Wp: " .. tostring(rt_wep_obj))
+            print(": RightWp: " .. tostring(lt_wep_obj))
+            print(":::::::::::::::::::")
+            print()
 
-
-            local left_weapon = weapon_item_hodler["<LeftWeapon>k__BackingField"]
-            local right_weapon = weapon_item_hodler["<RightWeapon>k__BackingField"]
         end
     end
 )
@@ -324,16 +417,25 @@ hotkeys.setup_hotkeys(hotkey_config.Hotkeys)
 
 
 local function get_regionstatus(character)
-    local region_data = character["<Hit>k__BackingField"].RegionData._items[0]
+    local region_status1 = character["<Hit>k__BackingField"].RegionData._items[0]
+    local region_status2 = character["<Hit>k__BackingField"].RegionData._items[1]
     region_data = {
-        hp = region_data.Hp,
-        maxhp = region_data.MaxHp,
-        oldhp = region_data.OldHp,
-        guard = region_data.ReduceRateGuard,
-        hproot = region_data.HpRootInfluenceRate,
-        threshold = region_data.DamageReactionThreshold.PerChar.Threshold[0].m_value,
-        lean = region_data.DamageReactionThreshold.PerChar.Lean[0].m_value,
-        blown = region_data.DamageReactionThreshold.PerChar.Blown[0].m_value
+        hp1 = region_status1.Hp,
+        maxhp1 = region_status1.MaxHp,
+        oldhp1 = region_status1.OldHp,
+        guard1 = region_status1.ReduceRateGuard,
+        hproot1 = region_status1.HpRootInfluenceRate,
+        threshold1 = region_status1.DamageReactionThreshold.PerChar.Threshold[0].m_value,
+        lean1 = region_status1.DamageReactionThreshold.PerChar.Lean[0].m_value,
+        blown1 = region_status1.DamageReactionThreshold.PerChar.Blown[0].m_value,
+        hp2 = region_status2.Hp,
+        maxhp2 = region_status2.MaxHp,
+        oldhp2 = region_status2.OldHp,
+        guard2 = region_status2.ReduceRateGuard,
+        hproot2 = region_status2.HpRootInfluenceRate,
+        threshold2 = region_status2.DamageReactionThreshold.PerChar.Threshold[0].m_value,
+        lean2 = region_status2.DamageReactionThreshold.PerChar.Lean[0].m_value,
+        blown2 = region_status2.DamageReactionThreshold.PerChar.Blown[0].m_value
     }
     return region_data
 end
@@ -349,6 +451,8 @@ local function get_oxcart_status(oid)
     local driver_invinc = driver_char["<Hit>k__BackingField"]["<IsInvincible>k__BackingField"]
     local driver_regiondata = get_regionstatus(driver_char)
 
+    --get WeaponAndItemHolder and add
+
     print("")
     print("========== OXCART STATUS ==========")
     print("| OX and CART")
@@ -362,14 +466,18 @@ local function get_oxcart_status(oid)
     print("| DRIVER")
     print("|- ID        : " .. tostring(char_ids[driver_id]))
     print("|- INVNC     : " .. tostring(driver_invinc))
-    print("|- HP        : " .. tostring(driver_regiondata.hp))
-    print("|- MAXHP     : " .. tostring(driver_regiondata.maxhp))
-    print("|- OLDHP     : " .. tostring(driver_regiondata.oldhp))
-    print("|- GUARD     : " .. tostring(driver_regiondata.guard))
-    print("|- HPROOT    : " .. tostring(driver_regiondata.hproot))
-    print("|- DMG THRESH: " .. tostring(driver_regiondata.threshold))
-    print("|- LEAN      : " .. tostring(driver_regiondata.lean))
-    print("|- BLOWN     : " .. tostring(driver_regiondata.blown))
+    print("|- HP1       : " .. tostring(driver_regiondata.hp1))
+    print("|- MAXHP1    : " .. tostring(driver_regiondata.maxhp1))
+    print("|- OLDHP1    : " .. tostring(driver_regiondata.oldhp1))
+    print("|- HP2       : " .. tostring(driver_regiondata.hp2))
+    print("|- MAXHP2    : " .. tostring(driver_regiondata.maxhp2))
+    print("|- OLDHP2    : " .. tostring(driver_regiondata.oldhp2))
+
+    --print("|- GUARD     : " .. tostring(driver_regiondata.guard))
+    --print("|- HPROOT    : " .. tostring(driver_regiondata.hproot))
+    --print("|- DMG THRESH: " .. tostring(driver_regiondata.threshold))
+    --print("|- LEAN      : " .. tostring(driver_regiondata.lean))
+    --print("|- BLOWN     : " .. tostring(driver_regiondata.blown))
     print("|-------------")
     print("|- R WEAPON  : " .. tostring(""))
     print("|- R WEAPONID: " .. tostring(""))
@@ -391,14 +499,18 @@ local function get_oxcart_status(oid)
                 local guard_regiondata = get_regionstatus(guard_char)
                 print("|- ID        : " .. tostring(char_ids[guard_id]))
                 print("|- INVNC     : " .. tostring(guard_char["<Hit>k__BackingField"]["<IsInvincible>k__BackingField"]))
-                print("|- HP        : " .. tostring(guard_regiondata.hp))
-                print("|- MAXHP     : " .. tostring(guard_regiondata.maxhp))
-                print("|- OLDHP     : " .. tostring(guard_regiondata.oldhp))
-                print("|- GUARD     : " .. tostring(guard_regiondata.guard))
-                print("|- HPROOT    : " .. tostring(guard_regiondata.hproot))
-                print("|- DMG THRESH: " .. tostring(guard_regiondata.threshold))
-                print("|- LEAN      : " .. tostring(guard_regiondata.lean))
-                print("|- BLOWN     : " .. tostring(guard_regiondata.blown))
+                print("|- HP1       : " .. tostring(guard_regiondata.hp1))
+                print("|- MAXHP1    : " .. tostring(guard_regiondata.maxhp1))
+                print("|- OLDHP1    : " .. tostring(guard_regiondata.oldhp1))
+                print("|- HP2       : " .. tostring(guard_regiondata.hp2))
+                print("|- MAXHP2    : " .. tostring(guard_regiondata.maxhp2))
+                print("|- OLDHP2    : " .. tostring(guard_regiondata.oldhp2))
+
+                --print("|- GUARD     : " .. tostring(guard_regiondata.guard))
+                --print("|- HPROOT    : " .. tostring(guard_regiondata.hproot))
+                --print("|- DMG THRESH: " .. tostring(guard_regiondata.threshold))
+                --print("|- LEAN      : " .. tostring(guard_regiondata.lean))
+                --print("|- BLOWN     : " .. tostring(guard_regiondata.blown))
                 print("|----------------------------------")
                 print("|- RWEP  : " .. tostring(""))
                 print("|- RWEPID: " .. tostring(""))
@@ -417,7 +529,7 @@ re.on_application_entry("LateUpdateBehavior",
             get_oxcart_status(this_ox_id)
         end
         if hotkeys.check_hotkey("PartsChecker", true, false) then
-            make_cart_and_parts_invincible()
+            buff_guards()
         end
     end
     )

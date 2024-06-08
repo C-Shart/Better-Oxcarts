@@ -2,8 +2,13 @@
     "equip_tables": {
       "Fighter": {
         "Melve": {
-            "l_wep": {},
-            "r_wep": {},
+            "character_id": 300802,
+            "equip_list": {
+                "RightWeapon": 0,
+                "LeftWeapon": 0,
+                "RightItem": 0,
+                "LeftItem": 0
+            },
             "head": {},
             "face": {},
             "chest": {},
@@ -22,7 +27,14 @@
         "Bakbattahl": {}
       },
       "Archer": {
-        "Melve": {},
+        "Melve": {
+            "equip_list": {
+                "RightWeapon": 0,
+                "LeftWeapon": 0,
+                "RightItem": 0,
+                "LeftItem": 0
+            }
+        },
         "Vernworth": {},
         "CheckVern": {},
         "CheckBak1": {},
@@ -30,17 +42,38 @@
         "Bakbattahl": {}
       },
       "Mage": {
-        "Melve": {},
+        "Melve": {
+            "equip_list": {
+                "RightWeapon": 0,
+                "LeftWeapon": 0,
+                "RightItem": 0,
+                "LeftItem": 0
+            }
+        },
         "Vernworth": {},
         "CheckVern": {},
         "Bakbattahl": {}
       },
       "Warrior": {
-        "Melve": {},
+        "Melve": {
+            "equip_list": {
+                "RightWeapon": 0,
+                "LeftWeapon": 0,
+                "RightItem": 0,
+                "LeftItem": 0
+            }
+        },
         "VernCheck": {}
       },
       "Sorceror": {
-        "Bakbattahl": {}
+        "Bakbattahl": {
+            "equip_list": {
+                "RightWeapon": 0,
+                "LeftWeapon": 0,
+                "RightItem": 0,
+                "LeftItem": 0
+            }
+        }
       }
     },
     "stat_tables": {

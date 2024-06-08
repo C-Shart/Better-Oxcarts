@@ -29,35 +29,82 @@
     + Turned out PartsList isn't necessary as of yet, but I do know how to iterate through it now if needed
 
 
+### SPECIAL THANKS
++ EXXXcellent for all the help and advice
++ praydog & alphaZomega for their excellent tools
++ Arctal's Simple Weapon Swap mod, which helped me wrap my head around how to switch weapons
+
+
 ### NOTES
 
+app.ItemManager
 
 
+app.ItemDefine.StorageData (returned from get_Equip)
+    _ItemData       app.ItemCommonParam
+        app.ItemCommonParam
+            ._Id
+    _StorageId      Int32
+    _CharaId        UInt16
+    _EquipSlot      Byte
+    _IsEquipped     Bool
 
+
+sdk.findtypedefinition(app.WeaponAndItemHolder)
+    :setEmpty()
+
+app.Character:
+    app.WeaponAndItemHolder             <WeaponAndItemHolder>k__BackingField
+        <LeftWeapon>k__BackingField
+            .createWeapon(app.WeaponID id, System.Boolean isAutoEquip)
+            .set_WeaponID(app.WeaponID value)
+            .set_Weapon(app.Weapon value)
+            .requestEquipWeapon(app.WeaponID id)
+        <RightWeapon>k__BackingField
+            .createWeapon(app.WeaponID id, System.Boolean isAutoEquip)
+            .set_WeaponID(app.WeaponID value)
+            .set_Weapon(app.Weapon value)
+            .requestEquipWeapon(app.WeaponID id)
+
+        Additionals
+            .createItem(app.EquipItemID id, System.Boolean isAutoEquip)
+            .set_ItemID(app.EquipItemID value)
+
+
+    <Human>k__BackingField      0x148
+        <Param>k__BackingField  0x430
+        Parameter               0x438
+            **LVupInfoParam
+                DefaultParam
+                    Job
+                    Hitpoint
+                    Stamina
+                    Attack
+                    Defence
+                    MagicAttack
+                    MagicDefence
+                    Blow
+                    BlowResistance
+
+        .get_Param()
+        .set_Param(app.HumanParameter value)
+        .setHumanParameter (app.HumanParameter param)
+
+app.CharacterListHolder
+    .add()
+    .getCharacter(app.CharacterID)
+
+app.CharacterListHolder.add()
+    args[2]     self, app.CharacterListHolder
+    args[3]     app.Character
 
 **************************************
+app.Human
+    <Context>k__BackingField
+
+
 app.Human.start()
     
-
-
-    Called methods:
-        app.DamageCalculator.setup(via.GameObject)
-            args[3]: via.GameObject
-                ._Name          (e.g. ch300803)
-            args[2]: app.DamageCalculator
-                <Ch2>k__BackingField
-                <RegionStatusCtrl>k__BackingField
-                <Attack>k__BackingField
-                <MagicAttack>k__BackingField
-                <ReactionAttack>k__BackingField
-                <StaminaAttack>k__BackingField
-                <EnchantPhsycalFactor>k__BackingField
-                <EnchantMagicalFactor>k__BackingField
-                <Defence>k__BackingField
-                <MagicDefence>k__BackingField
-                    app.CharacterDamageCalculator
-                    <Chara>k__BackingField
-
         app.EquipItemController.setup(via.Transform, app.WeaponAndItemHolder, app.SequenceController)
             args[5]: app.Sequencecontroller (get owner)
                 ._GameObject._Name
@@ -111,9 +158,21 @@ app.Human.start()
 
 **************************************
 
+app.HitController
+    .get_Item(int32 index)
+        .set_Item(int32 index, regionstatus value)
+    
 
-
-
+app.DamageCalculator
+    calcDamageValueAttackBase(app.HitController.DamageInfo)
+    calcDamageValueAttack(app.HitController.DamageInfo)             STUB DUP
+    calcDamageValueDefence(app.HitController.DamageInfo)            STUB DUP
+    calcDamageRactionValueAttackBase(app.HitController.DamageInfo)
+    calcDamageRactionValueAttack(app.HitController.DamageInfo)      STUB DUP
+    calcDamageRactionValueDefence(app.HitController.DamageInfo)     STUB DUP
+    calcGuardDamageValueAttackBase(app.HitController.DamageInfo)
+    calcGuardDamageValueAttack(app.HitController.DamageInfo)        STUB DUP
+    calcGuardDamageValueDefence(app.HitController.DamageInfo)       STUB DUP
 
 
 
@@ -267,29 +326,32 @@ Drivers
 300794  B-C
 
 Guards
-300802  Melve   Fighter >Warrior once Warrior quest complete
-300803  Melve   Archer
-300804  Melve   Mage
+charid  loc     class       r_wep       l_wep       item1       item2
+300802  Melve   Fighter     wp00_050_00 wp01_050_00 Iron Sword
+                >Warrior*   wp02_003_00             
+300803  Melve   Archer                  wp04_016_00 Hunter's Bow
+300804  Melve   Mage        wp07_004_00             Favored Flower
 
-300260  V-C     Fighter
-300383  V-C     Archer
-300258  V-C     Fighter >Warrior
+--300260  V-C     Fighter     -----------             Vermundian Brand
+--300383  V-C     Archer                  ----------- Predator
+300258  V-C     >Warrior    wp02_006_00             
 
-300056  V-M     Archer
-300055  V-M     Fighter (no shield)
-300057  V-M     Mage
+300056  V-M     Archer                  wp04_003_00 
+300055  V-M     Fighter     wp00_013_00             
+300057  V-M     Mage        wp07_016_00             
 
-300797  C-V     Archer
-300796  C-V     Fighter
-300798  C-V     Mage
+300797  C-V     Archer                  wp04_003_00 
+300796  C-V     Fighter     wp00_018_00             
+300798  C-V     Mage        wp07_015_00             
 
-300558  C-B     Fighter
-300369  C-B     Archer
-300545  C-B     Archer
+300558  C-B     Fighter     same but enhanced       
+300369  C-B     Archer                  wp04_005_00 
+300545  C-B     Archer                  wp04_008_00 
 
-300801  B-C     Mage    >Sorceror
-300800  B-C     Archer
-300799  B-C     Fighter
+300801  B-C     Mage        wp07_014_00             
+                >Sorceror   wp08_011_00             
+300800  B-C     Archer                  wp04_008_00 
+300799  B-C     Fighter     wp00_017_00             
 
 
 Equip tables for:
@@ -606,3 +668,22 @@ And layer here is just an integer, 0 for full body nodes (most of them) and 1 fo
 
 in hitcontroller there are just multipliers for damage rate and attack rate
 but they only work if you change them in LateUpdateBehavior
+
+
+
+============================
+============================
+============================
+
+
+local function get_game_quest_entity(id)
+    if QuestManager.EntityDict:call('ContainsKey', id) then
+        return QuestManager.EntityDict:get_Item(id)
+    end
+    return nil
+end
+local entity = get_game_quest_entity(questId)
+local resultNo = entity:get_ResultNo()
+-- if resultNo == -1 then incomplete
+-- if resultNo == 0 then finished (I think this is a successful finish)
+-- if resultNo == 1 then finished (I think this is unsuccessful finish)
