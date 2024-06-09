@@ -143,7 +143,7 @@ local function equip_guard(char, charID)
     -- Replace with logic that checks against the stat/equip tables as appropriate
     -- Expand to armor unless better done elsewhere
     if charID == "ch300802" then
-        _ItemManager:requestRightEquipWeapon(char, wep_ids["wp00_050_00"], false)
+        _ItemManager:requestRightEquipWeapon(char, wep_ids["wp00_007_00"], false) --wp00_050_00
     elseif charID == "ch300803" then
         _ItemManager:requestLeftEquipWeapon(char, wep_ids["wp04_016_00"], false)
     elseif charID == "ch300804" then
@@ -311,6 +311,7 @@ sdk.hook(
     sdk.find_type_definition("app.Human"):get_method("setHumanParameter"),
     function(args)
         local human = sdk.to_managed_object(args[2])
+        local job = human:get_JobContext():get_field("CurrentJob")
         local char = human["<Chara>k__BackingField"]
         local charID = char.CharacterID
         local is_guard = is_value_in_table(top_guards, tostring(char_ids[charID]))
@@ -323,7 +324,7 @@ sdk.hook(
             local default_params = human_parameters.LVupInfoParam.DefaultParam
             local skill_list = custom_skill_IDs._items
             local skill_list_cnt = custom_skill_IDs._size-1
-
+--[[ 
             -- Set new character params here
             print(":::       setHumanParameter       ::::")
             print("::::       Human Parameters        ::::")
@@ -342,13 +343,26 @@ sdk.hook(
             default_params.MagicAttack = 100
             default_params.Defence = 100
             default_params.MagicDefence = 100
-
+ ]]
             -- Set guard skills here
             print("::::       Custom Skill IDs        ::::")
+            local skill_context = human:call("get_SkillContext")
+
             for i=0,skill_list_cnt do
-                if skill_list[i].value__ > 0 then
-                    print(":::: " .. tostring(skill_list[i])) -- app.HumanCustomskillID
-                    print(":::: " .. tostring(skill_list[i].value__)) -- app.HumanCustomskillID
+                print(":::: " .. tostring(i))
+                local obj = skill_list[i]
+                local value = skill_list[i].value__
+                if value>0 and job~=1 then
+                    print(":::: " .. tostring(obj))
+                    print(":::: " .. tostring(value))
+                elseif value>0 and job==1 and i==0 then
+                    print(":::: ADDING SKILL 1")
+                    skill_context:setSkill(job, 1, i)
+                    print(":::: " .. tostring(skill_context:getSkillID(job, i)))
+                elseif value>0 and job==1 and i==1 then
+                    print(":::: ADDING SKILL 9")
+                    skill_context:setSkill(job, 9, i)
+                    print(":::: " .. tostring(skill_context:getSkillID(job, i)))
                 end
             end
 

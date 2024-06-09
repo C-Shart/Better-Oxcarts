@@ -39,25 +39,12 @@
 
 
 ### NOTES
+setSkill(app.Character.JobEnum job, app.HumanCustomSkillID id, app.HumanSkillContext.SkillSlot no)
 
-app.GenerateManager
-    <DictCharacterID>k__BackingField._entries
-        key, value
-    <DictGimmickID>k__BackingField._entries
-        key, value
-    _GenerateDefaultParam                       0xD8
-        .getStatus(app.CharacterID charaID)
-        .getInitSetting(app.CharacterID charaID, app.GenerateDefine.InitSetTypeEnum initType)
-
-
-app.GenerateInfo.set_Chara
-    <Chara>k__BackingField
-    <Hit>k__BackingField
-
-
-app.GenerateInfo.GenerateInfoContainer
-    get_HumanInfo()
-    set_HumanInfo(app.GenerateInfo.HumanInfoData)
+app.Human
+    <JobContext>k__BackingField         app.JobContext
+        CurrentJob
+        EquipedArmors
 
 
 app.GenerateInfo.HumanInfoData
