@@ -3,14 +3,16 @@
     + UI
 + BUG: Game loads same oxcart & guards
     + Find a way to refresh the cart. Finding this should enable me to also allow cart configuration
-+ BUG: Wandering too far from cart makes cart fall apart & disappear
++ BUG: Wandering too far from cart makes cart fall apart & disappear.i
     + Making the cart truly invincible & unbroken should resolve this
     + Also ensuring the cart is fresh when loaded
++ (configurable) Guard buffs (advanced abilities, buffed stats, better equipment)
+    + Equip and stat tables
+    + Logic to change equipment based on tables
+
 
 ## SOON
-+ Equip and stat tables
 + (configurable) Faster ox
-+ (configurable) Guard buffs (advanced abilities, buffed stats, better equipment)
 + (configurable) Ox buffs (buffed stats)
 
  
@@ -19,15 +21,16 @@
 + Driver appearance alteration (glowing eyes in combat, see about using the Medusa glare for this)
 + Driver BGM (nuDoom music plays when drivers get into fight)
 + Option - much faster cart outside of combat, play yakety sax
-+ Melve Fighter > Warrior if Warrior maister quest completed
-+ V-C Fighter % chance to be Warrior
-+ 
++ Immersive changes
+    + Melve Fighter (300802) to Warrior after Warrior maister quest
+    + V-C Fighter % chance to be Warrior? Just make him a warrior?
+    + Bakbattahl guard equip gets dwarven infusion after Sara quest
  
 ### DONE
 + BUG: Sm_80_042_Parts not completely being set invincible yet
     + Find way to iterate through the current cart's PartsList
     + Turned out PartsList isn't necessary as of yet, but I do know how to iterate through it now if needed
-
++ Adding weapons
 
 ### SPECIAL THANKS
 + EXXXcellent for all the help and advice
@@ -37,36 +40,73 @@
 
 ### NOTES
 
-app.ItemManager
+app.GenerateManager
+    <DictCharacterID>k__BackingField._entries
+        key, value
+    <DictGimmickID>k__BackingField._entries
+        key, value
+    _GenerateDefaultParam                       0xD8
+        .getStatus(app.CharacterID charaID)
+        .getInitSetting(app.CharacterID charaID, app.GenerateDefine.InitSetTypeEnum initType)
 
 
-app.ItemDefine.StorageData (returned from get_Equip)
-    _ItemData       app.ItemCommonParam
-        app.ItemCommonParam
-            ._Id
-    _StorageId      Int32
-    _CharaId        UInt16
-    _EquipSlot      Byte
-    _IsEquipped     Bool
+app.GenerateInfo.set_Chara
+    <Chara>k__BackingField
+    <Hit>k__BackingField
 
 
-sdk.findtypedefinition(app.WeaponAndItemHolder)
-    :setEmpty()
+app.GenerateInfo.GenerateInfoContainer
+    get_HumanInfo()
+    set_HumanInfo(app.GenerateInfo.HumanInfoData)
+
+
+app.GenerateInfo.HumanInfoData
+    get_Job()
+    set_Job(app.Character.JobEnum)
+    get_DecisionPackID()
+    set_DecisionPackID(app.AIDecisionDefine.DecisionPackID[])
+    get_RightWeaponID()
+    set_RightWeaponID(app.WeaponID)
+    get_LeftWeaponID()
+    set_LeftWeaponID(app.WeaponID)
+    get_HumanEnemyCombatParamId()
+    set_HumanEnemyCombatParamId(app.HumanEnemyParameterBase.HumanEnemyCombatParamTemplate)
+    <Job>k__BackingField
+    <DecisionPackID>k__BackingField
+    <RightWeaponID>k__BackingField
+    <LeftWeaponID>k__BackingField
+    <HumanEnemyCombatParamId>k__BackingField
+    <CharaEditBuildPriority>k__BackingField
+
+
+
+
+app.HitController.updateDamage
+    args    obj                             Notes
+    2       this.HitController              Damage receiver
+    3       HitController.DamageInfo        Damage giver?
+                ._RagdollFactor
+                ._LeanReaction
+                ._BlownReaction
+                ._AttackPosition            XYZ
+                ._DamagePosition            XYZ
+4           influence                       ?
+5           damage                          float
+6           isParent                        bool
+
+app.HitController.damageProc
+    args    obj                             Notes
+    2       this.HitController              Damage receiver
+    3       HitController.DamageInfo        Damage giver?
+                (same fields)
+    
+
+
+
+
 
 app.Character:
     app.WeaponAndItemHolder             <WeaponAndItemHolder>k__BackingField
-        <LeftWeapon>k__BackingField
-            .createWeapon(app.WeaponID id, System.Boolean isAutoEquip)
-            .set_WeaponID(app.WeaponID value)
-            .set_Weapon(app.Weapon value)
-            .requestEquipWeapon(app.WeaponID id)
-        <RightWeapon>k__BackingField
-            .createWeapon(app.WeaponID id, System.Boolean isAutoEquip)
-            .set_WeaponID(app.WeaponID value)
-            .set_Weapon(app.Weapon value)
-            .requestEquipWeapon(app.WeaponID id)
-
-        Additionals
             .createItem(app.EquipItemID id, System.Boolean isAutoEquip)
             .set_ItemID(app.EquipItemID value)
 
@@ -100,7 +140,27 @@ app.CharacterListHolder.add()
 
 **************************************
 app.Human
-    <Context>k__BackingField
+    set_HumanStaminaCtrl(app.HumanStaminaController)
+    set_JobContext(app.JobContext)
+    set_SkillContext(app.HumanSkillContext)
+    set_JobMagicUserActionContext(app.JobMagicUserActionContext)
+    set_AbilityContext(app.AbilityContext)
+    set_StaminaContext(app.StaminaContext)
+    set_Param(app.HumanParameter)
+    setHumanParameter(app.HumanParameter)
+    setupContexts()
+    setupItems()
+    setupAddtionalWeaponsAndItemsOfBow(app.WeaponID)
+    setupAdditionalWeaponsAndItemsOfArrow()
+    setupJobContext()
+    setupStatusContext()
+    setupSkillContext()
+    setupAbilityContext()
+    setupStaminaContext()
+    setMinRateMaxHp()
+    setupUserVariables()
+
+
 
 
 app.Human.start()
@@ -289,14 +349,6 @@ app.OxcartConnecter.requestOxcart()
     4       ID
 
 
-app.GenerateManager
-    <DictCharacterID>k__BackingField._entries
-        key, value
-    <DictGimmickID>k__BackingField._entries
-        key, value
-    _GenerateDefaultParam
-        .getStatus(app.CharacterID charaID)
-        .getInitSetting(app.CharacterID charaID, app.GenerateDefine.InitSetTypeEnum initType)
 
 
 Destinations
