@@ -10,11 +10,12 @@
     + Equip and stat tables
     + Logic to change equipment based on tables
 
-
 ## SOON
 + (configurable) Faster ox
 + (configurable) Ox buffs (buffed stats)
-
++ Double-check and test against oxcart quests
+    + Tension on the High Road (Raghnall)
+    + Phantom Oxcart
  
 ## LATER
 + Driver behavior alteration (join fights, add player classes/abilities)
@@ -25,6 +26,7 @@
     + Melve Fighter (300802) to Warrior after Warrior maister quest
     + V-C Fighter % chance to be Warrior? Just make him a warrior?
     + Bakbattahl guard equip gets dwarven infusion after Sara quest
++ Get info 
  
 ### DONE
 + BUG: Sm_80_042_Parts not completely being set invincible yet
@@ -33,12 +35,175 @@
 + Adding weapons
 
 ### SPECIAL THANKS
-+ EXXXcellent for all the help and advice
++ EXXXcellent, Nickesponja, shadowcookie, [], for all the help and advice
 + praydog & alphaZomega for their excellent tools
 + Arctal's Simple Weapon Swap mod, which helped me wrap my head around how to switch weapons
++ 
 
 
 ### NOTES
+
+app.HumanEnemyManager
+    get_DefaultNPCCombatParameter()
+       +app.HumanEnemyCombatParameterData
+        _TemplateID
+           +app.HumanEnemyParameterBase.HumanEnemyCombatParamTemplate *(static enum)
+    getNPCCombatParameter(app.HumanEnemyParameterBase.NPCCombatParamTemplate) - returns app.NPCCombatParameterData
+       +app.HumanEnemyManager.NPCJobParamSet
+        get_Param()
+
+    get_DefaultHumanEnemyParameter()
+    getHumanEnemyCombatParameter(app.HumanEnemyParameterBase.HumanEnemyCombatParamTemplate)
+        returns app.HumanEnemyCombatParameterData
+
+    get_TalkManager()
+    getSkillSet(app.HumanEnemyParameterBase.HumanEnemySkillSetID)
+    setNPCCombatDirector(app.Qu010180NPCCombatDirector)
+    getNPCThinkTableData(app.HumanEnemyParameterBase.NPCCombatParamTemplate) - returns app.ThinkTableData
+
+
+app.HumanEnemyParameterBase
+    get_CommonHitParam()
+    get_RegionStatusData()
+
+
+    _Attack, _Defence, etc
+
+
+app.HumanEnemyCom
+
+
+app.NPCCombatParameterData
+
+
+app.NPCCombatParameterData.JobCombatParamPair
+
+
+app.NPCCombatThinkTableData
+    .TemplateID
+    .CombatTableData
+
+
+app.ThinkTableData
+    get_TableDataID()
+    CharaID
+    ThinkVariableData
+    ThinkTableList
+    _TableDataID
+
+
+app.ThinkTable
+    TableName
+    CommandList
+
+app.ThinkTableController
+
+
+app.HumanEnemyController
+    set_OverrideCombatParam(app.HumanEnemyParameterBase.NPCCombatParamTemplate)
+    set_NPCCombatParam(app.HumanEnemyParameterBase.NPCCombatParamTemplate)
+    changeNPCCombatTable(app.HumanEnemyParameterBase.NPCCombatParamTemplate)
+
+    getCombatParam(app.Character, app.HumanEnemyController.HumanType, app.Character.JobEnum)
+    getOverwriteHpParam(app.Character)
+
+
+
+    applyParameter(app.HumanEnemyParameterBase.NPCCombatParamTemplate, System.Boolean)
+**  applySkillSet(app.HumanEnemyParameterBase.HumanEnemySkillSetID)
+        2   this.HumanEnemyController
+        3   app.HumanEnemyParameterBase.HumanEnemySkillSetID
+        4   app.GenerateDefaultParameter
+        5   app.ExceptPlayerDamageCalculator
+
+    
+
+app.CharacterManager
+    initNPCCombatParameterDict(System.Collections.Generic.Dictionary`2<app.HumanEnemyParameterBase.NPCCombatParamTemplate,app.NPCCombatParameterData>)
+
+
+
+app.NPCManager
+    get_HumanEnemyThinkTableDataList()
+    set_HumanEnemyThinkTableDataList(app.HumanEnemyThinkTableDataList)
+
+
+app.QuestNpcOverride
+    get_QuestID
+    get_NpcID
+    get_Condition
+    get_Generate
+    get_Schedule
+    get_Job
+    get_Combat
+    getCharacterData
+
+    _DisplaySettingFlags
+    _QuestID
+    _NpcID
+    _Condition
+    _Generate
+        _Generate           app.CharacterData.GenerateDefine
+    _Job
+        _Job                app.CharacterData.JobDefine
+   *_Combat                 app.QuestNpcOverride.CombatSetting
+        _CombatJob          app.Character.JobEnum
+        _CombatParam        app.HumanEnemyParameterBase.NPCCombatParamTemplate
+        _IsWeapon
+        _LeftWeapon
+        _RightWeapon
+
+
+
+
+
+app.AIManager
+    setPersonalityPolicyDB(app.PersonalityPolicyTable)
+    doPersonalityPolicyData(System.Action`2<app.AIDecisionDefine.Policy,System.Collections.Generic.Dictionary`2<System.UInt32,System.Single>>)
+    registerPersonalityData(app.PersonalityDefine.PersonalityID, app.PersonalityData)
+    unregisterPersonalityData(app.PersonalityDefine.PersonalityID)
+    getPersonalityData(app.PersonalityDefine.PersonalityID)
+    _PersonalityPolicyDB
+    _PersonalityPolictDBLock
+    _PersonalityDataDB
+    _PersonalityDataDBLock
+
+
+app.AISituationManager
+
+
+app.CharacterAIStateController
+    get_AIState()
+    get_IsCautionState()
+    get_IsCombatState()
+    get_IsDangerState()
+    get_IsAngry()
+    add_AIStateChangedEvent(System.Action`1<app.AIStateEnum>)
+    remove_AIStateChangedEvent(System.Action`1<app.AIStateEnum>)
+    requestForceAIState(app.AIStateEnum)
+    switchAIState(app.AIStateEnum)
+    requestAIState(app.AIStateEnum)
+    _AIState
+    _PrevAIState
+    _FixAIState
+
+app.AIDecisionMaker
+    get_DecisionModule()
+        set_DecisionModule(app.AIDecisionModule)
+    get_Context()
+        set_Context(app.ContextHolder)
+    get_Character()
+    addDecisionPack(app.DecisionPack)
+    addDecisionPack(app.AIDecisionDefine.DecisionPackID)
+    removeDecisionPack(app.DecisionPack)
+    remDecisionPack(app.AIDecisionDefine.DecisionPackID)
+
+
+
+
+
+
+
 setSkill(app.Character.JobEnum job, app.HumanCustomSkillID id, app.HumanSkillContext.SkillSlot no)
 
 app.Human
@@ -205,139 +370,6 @@ app.Human.start()
 
 **************************************
 
-app.HitController
-    .get_Item(int32 index)
-        .set_Item(int32 index, regionstatus value)
-    
-
-app.DamageCalculator
-    calcDamageValueAttackBase(app.HitController.DamageInfo)
-    calcDamageValueAttack(app.HitController.DamageInfo)             STUB DUP
-    calcDamageValueDefence(app.HitController.DamageInfo)            STUB DUP
-    calcDamageRactionValueAttackBase(app.HitController.DamageInfo)
-    calcDamageRactionValueAttack(app.HitController.DamageInfo)      STUB DUP
-    calcDamageRactionValueDefence(app.HitController.DamageInfo)     STUB DUP
-    calcGuardDamageValueAttackBase(app.HitController.DamageInfo)
-    calcGuardDamageValueAttack(app.HitController.DamageInfo)        STUB DUP
-    calcGuardDamageValueDefence(app.HitController.DamageInfo)       STUB DUP
-
-
-
-
-
-app.Ch299003
-    .setNoDieFlag(bool)
-    <IsInvincible>k__BackingField       0x132
-    MotSpeedMax                         0x238
-    MotSpeedMin                         0x23C
-    RunRangeCenter
-    RunRageDist
-    RunRate
-    app.Ch299
-        app.Ch200000
-            <Chara>k__BackingField      0x60
-
-            <Monster>k__BackingField    0x68
-
-app.Gm80_042
-    .IsSetup
-    .HasCage
-    .GimmickId
-    ["<UniqId>k__BackingField"]._Index
-    .get_BoardingRouteNum()
-    .setupObjects()
-    _IsUnbreakable                  0x200
-    <CompHitCtrl>k__BackingField    0xC0
-        RegionData._items           0x258
-            Hp
-            MaxHp
-            OldHp
-    RegionStatusCtrl                0xA0
-
-
-app.OxcartManager
-    *.getSchedule_BaseInfo(app.CharacterID)
-        1       thread
-        2       (this.)app.OxcartManager
-        3*      app.CharacterID charaID
-        4       ID
-        5       ID
-        Return: app.OxcartSchedule.OxcartBaseInfo
-                    OxcartID
-    *.getSchedule(app.CharacterID charaID)
-        1       thread
-        2       (this.)app.OxcartManager
-        3*      app.CharacterID charaID
-        4       ?charaID
-        5       app.OxcartStatus
-        Return: app.OxcartSchedule
-
-    *.getStatus(oxcart id)
-        1       thread
-        2       (this.)app.OxcartManager
-        3*      app.CharacterID oxcartID
-        4       ID
-        5       ID
-        Return: app.OxcartStatus
-                    .Route
-                    .<oxcartdummy>k__BackingField
-                    .MoveSpeed
-                    .OxcartID
-                    .DriverID
-                    ._Guards
-                    .Driver (app.OxcartNPC)
-                    .ALLCharaID
-
-    .setSchedule(app.CharacterID, app.OxcartSchedule)
-
-app.OxcartSchedule
-    OxcartBaseInfos
-    Routes
-    Members
-
-
-app.OxcartUtil
-    .getOxcartStatus(app.CharacterID oxcartID)
-    .getOxcartStatus_AssignCharacterID(app.ChracterID)
-    .getOxcartScheduleData()
-    .getOxcartStatus_Entity()
-    .getStatusList()
-
-app.OxcartCondition
-    .Evaluate()
-
-app.OxcartStatus
-    .registerOxcart(app.CharacterID oxcart, app.OxcartAI obj, System.Boolean IsDummyUpdate)
-    .registerOxcart(app.CharacterID oxcart, app.DummyDataOxcart obj)
-    .setScheduleState_Oxcart()
-    .getDestinationID()
-    .get_oxcartAI()
-    .set_oxcartAI(app.OxcartAI value)
-    Route
-    <oxcartAI>k__BackingField
-
-app.OxcartConnecter
-    .getOxcartGimmickID(app.CharacterID)
-    .getOxcartUniqueID(app.CharacterID)
-    ["OxcartCharaIDArray"]
-    ["_OxcartUniqueID"]
-    ["_Oxcart"]
-
-app.OxcartConnecter.requestOxcart()
-    1       thread
-    2       (this.)app.Oxcartconnecter
-                ._Oxcart
-                    ._BoardingRouteNum
-                    .MaxHp
-                    .GenerateParent
-                    ._GameObject._Name
-                ._OxcartUniqueID._Index
-    3       app.Oxcartconnecter
-    4       ID
-
-
-
-
 Destinations
 + 1: Vernworth
 + 2: Checkpoint Rest Town
@@ -416,36 +448,7 @@ Equip tables for:
     Vernworth Warrior
     Bakbattahl Sorceror
 
-ch2 = damage_calculator["<Ch2>k__BackingField"]
-r_stat_ctrl = damage_calculator["<RegionStatusCtrl>k__BackingField"]
-attack = damage_calculator["<Attack>k__BackingField"]
-magic_attack = damage_calculator["<MagicAttack>k__BackingField"]
-react_attack = damage_calculator["<ReactionAttack>k__BackingField"]
-stam_attack = damage_calculator["<StaminaAttack>k__BackingField"]
-enchant_phys = damage_calculator["<EnchantPhsycalFactor>k__BackingField"]
-enchant_mag = damage_calculator["<EnchantMagicalFactor>k__BackingField"]
-defense = damage_calculator["<Defence>k__BackingField"]
-magic_defense = damage_calculator["<MagicDefence>k__BackingField"]
 
-
-
-app.Sm80_042_Parts (app.Gm80_042.PartsList)
-
-app.GimmickManager
-    ["<ManagedGimmicks>k__BackingField"]._items
-    .register(app.GimmickBase gimmick)
-app.GimmickBase
-    ["GimmickId"] == 124
-    ["<CompHitCtrl>k__BackingField"]
-        ["<IsInvincible>k__BackingField"] == true
-    ["<UniqId>k__BackingField"] (app.UniqueID)
-    app.Gm80_042["<ParentId>k__BackingField"] == OxcartStatus.OxcartID
-        -- app.GimmickBase.<UniqId>k__BackingField = app.UniqueID
-
-
-app.NPCManager
-    (all oxcart schedule methods are dupes)
-    .setScheduleState_Oxcart(app.CharacterID, app.OxcartStatus)
 
 
 app.OxcartAI
@@ -472,11 +475,6 @@ app.Character:
     app.Human                           <Human>k__BackingField
 
 
-app.NPCManager:
-    .get_NPCList()
-    .getNPCConfig()
-    .getNPCCharacterData()
-    .setupCharacterData()
 
 app.Character
     .get_ActionManager()
@@ -530,19 +528,19 @@ app.Character
     get_IsExternalPreparing()
     get_IsBuildingPreparing()
     get_IsBuilding()
-*   get_Hp()
+    get_Hp()
     get_ReducedMaxHp()
     get_ReducedHpRate()
-*   get_OriginalMaxHp()
+    get_OriginalMaxHp()
     get_ElapsedSecond()
     get_IsDrawedWeapon()
         set_IsDrawedWeapon(System.Boolean)
-*   get_RightWeapon()
-*   get_RightWeaponID()
-*   get_IsEquipRightWeapon()
-*   get_LeftWeapon()
-*   get_IsEquipLeftWeapon()
-*   get_IsEquipRightWeapon()
+    get_RightWeapon()
+    get_RightWeaponID()
+    get_IsEquipRightWeapon()
+    get_LeftWeapon()
+    get_IsEquipLeftWeapon()
+    get_IsEquipRightWeapon()
     setInputProcessor(app.CharacterInputProcessor)
     setActionSelector(app.CharacterCommonActionSelector)
     isKindOf(app.Character.CharacterKindEnum)
@@ -552,8 +550,8 @@ app.Character
     setupContexts()
     convertContextBeforeStore()
     setupUserVariables()
-**  .addAndEquipItems(app.WeaponID, app.WeaponID, app.CharacterEditDefine.MetaData)
-**  .setEquipItemStorage(app.ItemCommonParam)
+    .addAndEquipItems(app.WeaponID, app.WeaponID, app.CharacterEditDefine.MetaData)
+    .setEquipItemStorage(app.ItemCommonParam)
     onInitializeCharacterBegin(app.CharacterID)
     onInitializeCharacterEnd(app.CharacterID)
     awake()
@@ -562,54 +560,6 @@ app.Character
     getJobIndex(app.Character.JobEnum)
     getWeaponJob(app.Character chara)
 
-***
-    <WeaponAndItemHolder>k__BackingField    0x270
-        <LeftWeapon>k__BackingField
-        <RightWeapon>k__BackingField
-            changeWeapon(app.Weapon)
-        app.WeaponAndItemHolder.Slot
-            setEmpty()
-            requestEquipWeapon(app.WeaponID)
-            requestEquipItem(app.EquipItemID)
-            prepareItem(app.EquipItemID)
-            prepareWeapon(app.WeaponID)
-            equipPrepared()
-            setupWeapon()
-            setupItem()
-            applyScale()
-
-
-            <WeaponID>k__BackingField
-
-
-    WeaponContext                           0x688
-
-
-app.Weapon
-    get_IDProp()
-    get_JobProp()
-    get_Owner()
-        set_Owner(via.GameObject)
-    <Owner>k__BackingField
-    <PartSwapper>k__BackingField
-    ID
-    Job
-
-
-app.EquipmentManager
-    setWeaponSetting(app.WeaponSetting weaponSetting)
-    registerWeapon(app.WeaponCatalogData)
-    registerEquipItem(app.EquipItemCatalogData)
-    unregisterWeapon(app.WeaponCatalogData)
-    unregisterEquipItem(app.EquipItemCatalogData)
-    requestInstantiate(app.WeaponID, via.Component, System.Action`1<app.PrefabInstantiateResults>, System.Func`1<System.Boolean>)
-    requestInstantiate(app.EquipItemID, via.Component, System.Action`1<app.PrefabInstantiateResults>, System.Func`1<System.Boolean>)
-    getQuiverID(app.WeaponID)
-    setupWeapon(app.PrefabInstantiateResults, System.Action`1<app.PrefabInstantiateResults>, System.Func`1<System.Boolean>)
-    setupEquipItem(app.PrefabInstantiateResults, System.Action`1<app.PrefabInstantiateResults>, System.Func`1<System.Boolean>)
-    WeaponSetting
-    WeaponCatalog
-    EquipItemCatalog
 
 
 app.AIDecisionMaker
@@ -673,6 +623,12 @@ app.AIDecisionDefine
 
 
 
+============================
+============================
+============================
+
+
+
 
 
 
@@ -710,11 +666,8 @@ but they only work if you change them in LateUpdateBehavior
 
 
 
-============================
-============================
-============================
 
-
+-- Check a quest's status
 local function get_game_quest_entity(id)
     if QuestManager.EntityDict:call('ContainsKey', id) then
         return QuestManager.EntityDict:get_Item(id)
@@ -726,3 +679,55 @@ local resultNo = entity:get_ResultNo()
 -- if resultNo == -1 then incomplete
 -- if resultNo == 0 then finished (I think this is a successful finish)
 -- if resultNo == 1 then finished (I think this is unsuccessful finish)
+
+
+app.QuestManager
+    .EntityDict         0x38        {Quest ID, quest object}
+        key                         Quest ID
+        value                       Object
+            get_IsConditionEnd()
+            .Context
+                <IsConditionEnd>k__BackingField
+
+
+
+
+
+
+sdk.hook(sdk.find_type_definition("app.ActionManager"):get_method("requestActionCore(app.ActionManager.Priority, System.String, System.UInt32)"),
+function(args)
+  
+  -- Assuming you want to work with the player, it's a bit more complicated for pawns or other characters
+  local player=sdk.get_managed_singleton("app.CharacterManager"):get_ManualPlayer()
+  -- args[2] is always the instance of the type that called the method
+  local ThisActionManager=sdk.to_managed_object(args[2])
+  -- Check that the player is there (meaning you aren't on a loading screen or anything like that) and that this method was called by the player's action manager
+  if player and ThisActionManager==player:get_ActionManager() then
+    -- args[4] is the node name
+    local node_name=sdk.to_managed_object(args[4]):ToString()
+    -- This will print the node name in the debug console so you can find the animation you want to prevent from playing. Make sure to comment it out or delete it after you're done
+    print(node_name)
+    -- Once you find your node name, substitute it here:
+    if node_name=="The animation you want to prevent" then
+      -- This skips setting that animation
+      return sdk.PreHookResult.SKIP_ORIGINAL
+    end
+
+  end
+ 
+end)
+
+-- If you want to swap nodes you need to do something like
+--A word of caution, most animations are on layer 0 (notable exceptions are bow animations and spells), but if you want to do stuff that mixes layers you may need to add a layer check on top of the node_name check (and maybe use a different variable for the upper body nodes) to prevent weird interactions and get everything to work smoothly
+if node_name=="Shield Summons name" then
+  args[4]=sdk.to_ptr(sdk.create_managed_string("Blink Strike name"))
+end
+
+
+
+
+
+if (imgui.tree_node("<TREE NAME>") then
+  -- UI Code that you want to appear in this tree (>dropdown in the UI)
+  imgui.tree_pop()
+end

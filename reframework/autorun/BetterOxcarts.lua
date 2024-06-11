@@ -44,28 +44,28 @@ end
 -- HELPER FUNCTIONS --
 ----------------------
 
--- Creates an enum of all Character IDs and stores it
-local function generate_char_ids()
-    local character_ids = sdk.find_type_definition("app.CharacterID")
-    if not character_ids then return {} end
-    local fields = character_ids:get_fields()
+-- Creates enum of given IDs and stores them
+local function generate_enum(type_str)
+    local _ids = sdk.find_type_definition(type_str)
+    if not _ids then return {} end
+    local fields = _ids:get_fields()
     local enum = {}
     for i, field in ipairs(fields) do
         local name = field:get_name()
         local raw_value = field:get_data()
+        --print(name .. ", " .. tostring(raw_value))
         if raw_value then
             enum[raw_value] = name
         end
     end
     return enum
 end
-local char_ids = generate_char_ids()
 
--- Creates an enum of all Weapon IDs
-local function generate_weapon_ids()
-    local weapon_ids = sdk.find_type_definition("app.WeaponID")
-    if not weapon_ids then return {} end
-    local fields = weapon_ids:get_fields()
+-- Creates an enum of IDs but with name-data reversed
+local function generate_enum_rev(type_str)
+    local _ids = sdk.find_type_definition(type_str)
+    if not _ids then return {} end
+    local fields = _ids:get_fields()
     local enum = {}
     for i, field in ipairs(fields) do
         local name = field:get_name()
@@ -76,7 +76,10 @@ local function generate_weapon_ids()
     end
     return enum
 end
-local wep_ids = generate_weapon_ids()
+
+local char_ids = generate_enum("app.CharacterID")
+local action_ids = generate_enum("app.HumanActionID")
+local wep_ids = generate_enum_rev("app.WeaponID")
 
 -- Checks if character ID is in top_char_ids and sets index value if so
 local function has_character_id(tbl, val)
@@ -124,7 +127,7 @@ end
 
 
 local function equip_guard(char, charID)
-    print(": Owner  : " .. tostring(charID))
+    print(":::::: Equipping : " .. tostring(charID))
 
     local owning_human = char["<Human>k__BackingField"]
     local equip_list = _ItemManager:getEquipData(charID):get_EquipList()
@@ -222,7 +225,7 @@ local function make_driver_and_guards_invincible(oid)
                 table.insert(top_char_ids, guard)
             else
                 local guard_char = _NPCManager:getCharacter(guard)
-                --make_invincible(guard_char)
+                make_invincible(guard_char)
             end
         end
     end
@@ -268,21 +271,12 @@ sdk.hook(
         if #top_char_ids > 0 then
             local npc_object = sdk.to_managed_object(args[3])
             if has_character_id(top_char_ids, npc_object["CharacterID"]) then
-                --make_invincible(npc_object)
+                make_invincible(npc_object)
                 table.remove(top_char_ids, top_cids_index)
             end
         end
     end
 )
-
--- Hooks methods to avoid the cart and its parts taking damage
-local cart_typedef = sdk.find_type_definition("app.Gm80_042")
-local parts_typedef = sdk.find_type_definition("app.Sm80_042_Parts")
-sdk.hook(cart_typedef:get_method("onDamageHit"), skip_execution)
-sdk.hook(cart_typedef:get_method("onCalcDamageEnd"), skip_execution)
-sdk.hook(cart_typedef:get_method("executeBreak"), skip_execution)
-sdk.hook(parts_typedef:get_method("executeBreak"), skip_execution)
-sdk.hook(parts_typedef:get_method("callbackDamageHit"), skip_execution)
 
 -- Hooks EquipItemController.setup to apply new values
 sdk.hook(
@@ -294,12 +288,49 @@ sdk.hook(
         local is_oxcart_guard = is_value_in_table(top_guards, owning_char_id)
 
         if is_oxcart_guard then
-            print()
-            print(":::::: EquipItemController ::::::")
             equip_guard(owning_char, owning_char_id)
         end
     end
 )
+
+-- Hooks applySkillSet and changes a character's SkillSetIDs
+sdk.hook(
+    sdk.find_type_definition("app.HumanEnemyController"):get_method("applySkillSet"),
+    function(args)
+        local name = tostring(char_ids[sdk.to_managed_object(args[2]):get_Owner():get_CharaID()])
+        local is_guard = is_value_in_table(top_guards, name)
+        --print(name .. "," .. tostring(is_guard))
+
+        if is_guard then
+            local skill_set_id = sdk.to_int64(args[3])
+            args[3] = sdk.to_ptr(skill_set_id+1)
+        end
+    end
+)
+
+
+
+
+-- Hooks methods to avoid the cart and its parts taking damage
+local cart_typedef = sdk.find_type_definition("app.Gm80_042")
+local parts_typedef = sdk.find_type_definition("app.Sm80_042_Parts")
+sdk.hook(cart_typedef:get_method("onDamageHit"), skip_execution)
+sdk.hook(cart_typedef:get_method("onCalcDamageEnd"), skip_execution)
+sdk.hook(cart_typedef:get_method("executeBreak"), skip_execution)
+sdk.hook(parts_typedef:get_method("executeBreak"), skip_execution)
+sdk.hook(parts_typedef:get_method("callbackDamageHit"), skip_execution)
+
+
+
+
+-------------------- arbitrary line of experimentation --------------------
+
+
+
+
+
+
+-- Trying to find/change stats and params --
 
 --sdk.find_type_definition("app.Human"):get_method("setHumanParameter"),
 -- args[2] self.Human
@@ -318,12 +349,12 @@ sdk.hook(
 
         if is_guard then
             local human_parameters = sdk.to_managed_object(args[3])
-            local custom_skill_IDs = sdk.to_managed_object(args[4])
+            --local custom_skill_IDs = sdk.to_managed_object(args[4])
             local damage_calculator = sdk.to_managed_object(args[5])
 
             local default_params = human_parameters.LVupInfoParam.DefaultParam
-            local skill_list = custom_skill_IDs._items
-            local skill_list_cnt = custom_skill_IDs._size-1
+            --local skill_list = custom_skill_IDs._items
+            --local skill_list_cnt = custom_skill_IDs._size-1
 --[[ 
             -- Set new character params here
             print(":::       setHumanParameter       ::::")
@@ -344,16 +375,18 @@ sdk.hook(
             default_params.Defence = 100
             default_params.MagicDefence = 100
  ]]
+
+--[[ 
             -- Set guard skills here
             print("::::       Custom Skill IDs        ::::")
             local skill_context = human:call("get_SkillContext")
 
             for i=0,skill_list_cnt do
-                print(":::: " .. tostring(i))
+                print(":::: SLOT " .. tostring(i) .. " ::::")
                 local obj = skill_list[i]
                 local value = skill_list[i].value__
                 if value>0 and job~=1 then
-                    print(":::: " .. tostring(obj))
+                    print(":::: " .. obj:ToString())
                     print(":::: " .. tostring(value))
                 elseif value>0 and job==1 and i==0 then
                     print(":::: ADDING SKILL 1")
@@ -365,6 +398,7 @@ sdk.hook(
                     print(":::: " .. tostring(skill_context:getSkillID(job, i)))
                 end
             end
+ ]]
 
 --[[ 
             local attack = damage_calculator["<Attack>k__BackingField"]
