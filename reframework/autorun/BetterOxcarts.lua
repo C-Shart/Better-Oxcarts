@@ -1,8 +1,10 @@
+local chardata_module = require "data/stat_equip_tables"
 local modname="[BetterOxcarts]"
 
 local _NPCManager = sdk.get_managed_singleton("app.NPCManager")
 local _CharacterListHolder = sdk.get_managed_singleton("app.CharacterListHolder")
 local _ItemManager = sdk.get_managed_singleton("app.ItemManager")
+
 
 local top_char_ids = {}
 local this_ox_id = 0
@@ -128,8 +130,8 @@ end
 
 local function equip_guard(char, charID)
     print(":::::: Equipping : " .. tostring(charID))
-
     local owning_human = char["<Human>k__BackingField"]
+    local g_equip = chardata_module[charID].equipment.weapons
     local equip_list = _ItemManager:getEquipData(charID):get_EquipList()
 
     -- Unequip current left/right weapons
@@ -143,14 +145,11 @@ local function equip_guard(char, charID)
     end
 
  -- Equip the appropriate weapon IDs
-    -- Replace with logic that checks against the stat/equip tables as appropriate
     -- Expand to armor unless better done elsewhere
-    if charID == "ch300802" then
-        _ItemManager:requestRightEquipWeapon(char, wep_ids["wp00_007_00"], false) --wp00_050_00
-    elseif charID == "ch300803" then
-        _ItemManager:requestLeftEquipWeapon(char, wep_ids["wp04_016_00"], false)
-    elseif charID == "ch300804" then
-        _ItemManager:requestRightEquipWeapon(char, wep_ids["wp07_011_00"], false)
+    if g_equip.right_weapon_id then
+        _ItemManager:requestRightEquipWeapon(char, wep_ids[g_equip.right_weapon_id], false)
+    elseif g_equip.left_weapon_id then
+        _ItemManager:requestLeftEquipWeapon(char, wep_ids[g_equip.left_weapon_id], false)
     end
 end
 
@@ -225,7 +224,7 @@ local function make_driver_and_guards_invincible(oid)
                 table.insert(top_char_ids, guard)
             else
                 local guard_char = _NPCManager:getCharacter(guard)
-                make_invincible(guard_char)
+                --make_invincible(guard_char)
             end
         end
     end
@@ -271,7 +270,7 @@ sdk.hook(
         if #top_char_ids > 0 then
             local npc_object = sdk.to_managed_object(args[3])
             if has_character_id(top_char_ids, npc_object["CharacterID"]) then
-                make_invincible(npc_object)
+                --make_invincible(npc_object)
                 table.remove(top_char_ids, top_cids_index)
             end
         end
@@ -293,6 +292,8 @@ sdk.hook(
     end
 )
 
+
+
 -- Hooks applySkillSet and changes a character's SkillSetIDs
 sdk.hook(
     sdk.find_type_definition("app.HumanEnemyController"):get_method("applySkillSet"),
@@ -302,14 +303,70 @@ sdk.hook(
         --print(name .. "," .. tostring(is_guard))
 
         if is_guard then
-            local skill_set_id = sdk.to_int64(args[3])
-            args[3] = sdk.to_ptr(skill_set_id+1)
+            -- TODO: use app.HumanSkillContext.setSkills() to directly change equipped skills?
+            -- setSkills(app.Character.JobEnum, System.Collections.Generic.IEnumerable`1<app.HumanCustomSkillID>)
+
+            local g_skill_set_id = chardata_module[name].skill_set_id
+            args[3] = sdk.to_ptr(g_skill_set_id)
         end
     end
 )
 
 
 
+-- Hooks HumanSkillContext.setSkills to confirm skills & also set them directly(?)
+-- setSkills(app.Character.JobEnum, System.Collections.Generic.IEnumerable`1<app.HumanCustomSkillID>)
+sdk.hook(
+    sdk.find_type_definition("app.HumanSkillContext"):get_method("setSkills"),
+    function(args)
+        local is_obj = sdk.is_managed_object(args[6])
+        if not is_obj then return end
+
+        local char = sdk.to_managed_object(args[6])["<Chara>k__BackingField"]
+        local name = tostring(char_ids[char.CharacterID])
+        local is_guard = is_value_in_table(top_guards, name)
+        --print(name .. "," .. tostring(is_guard))
+
+        if is_guard then
+            print(":::: HumanSkillContext.setSkills -- " .. name .. " ::::")
+            local skill_list = sdk.to_managed_object(args[4])
+            local listlen = skill_list:get_size()-1
+            for i=0,listlen do
+                print(skill_list[i]:ToString() .. ", " .. tostring(skill_list[i].value__))
+            end
+        end
+    end
+)
+
+
+
+--Hooks HumanEnemyController.applyStatus and adjusts attack/defense values
+sdk.hook(
+    sdk.find_type_definition("app.HumanEnemyController"):get_method("applyStatus"),
+    function(args)
+        local name = tostring(char_ids[sdk.to_managed_object(args[2]):get_Owner():get_CharaID()])
+        local is_guard = is_value_in_table(top_guards, name)
+        --print(name .. "," .. tostring(is_guard))
+
+        if is_guard then
+            local hum_enemy_param_base_1 = sdk.to_managed_object(args[3])
+            local hum_enemy_param_base_2 = sdk.to_managed_object(args[4])
+
+            local g_stats = chardata_module[name].stats
+
+            hum_enemy_param_base_1._Attack = g_stats.attack1
+            hum_enemy_param_base_1._Defence = g_stats.defence1
+            hum_enemy_param_base_1._MagicAttack = g_stats.mattack1
+            hum_enemy_param_base_1._MagicDefence = g_stats.mdefence1
+
+            hum_enemy_param_base_2._Attack = g_stats.attack2
+            hum_enemy_param_base_2._Defence = g_stats.defence2
+            hum_enemy_param_base_2._MagicAttack = g_stats.mattack2
+            hum_enemy_param_base_2._MagicDefence = g_stats.mdefence2
+
+        end
+    end
+)
 
 -- Hooks methods to avoid the cart and its parts taking damage
 local cart_typedef = sdk.find_type_definition("app.Gm80_042")
@@ -330,105 +387,55 @@ sdk.hook(parts_typedef:get_method("callbackDamageHit"), skip_execution)
 
 
 
--- Trying to find/change stats and params --
 
---sdk.find_type_definition("app.Human"):get_method("setHumanParameter"),
--- args[2] self.Human
--- args[3] app.HumanParameter
--- args[4] list of app.HumanCustomSkillIDs, can be used to set job skills
--- args[5] ExceptPlayerDamageCalculator object
 
+
+--[[ 
+-- Hooks HumanSkillContext.setSkills to confirm skills & also set them directly(?)
+-- setSkills(app.Character.JobEnum, System.Collections.Generic.IEnumerable`1<app.HumanCustomSkillID>)
 sdk.hook(
-    sdk.find_type_definition("app.Human"):get_method("setHumanParameter"),
+    sdk.find_type_definition("app.HumanSkillContext"):get_method("setSkills"),
     function(args)
-        local human = sdk.to_managed_object(args[2])
-        local job = human:get_JobContext():get_field("CurrentJob")
-        local char = human["<Chara>k__BackingField"]
-        local charID = char.CharacterID
-        local is_guard = is_value_in_table(top_guards, tostring(char_ids[charID]))
+        local is_obj = sdk.is_managed_object(args[6])
+        if not is_obj then return end
+        
+        local obj = sdk.to_managed_object(args[6])
+        local char = obj["<Chara>k__BackingField"]
+        local name = tostring(char_ids[char.CharacterID])
+        local is_guard = is_value_in_table(top_guards,  name)
+        --print(name .. "," .. tostring(is_guard))
 
         if is_guard then
-            local human_parameters = sdk.to_managed_object(args[3])
-            --local custom_skill_IDs = sdk.to_managed_object(args[4])
-            local damage_calculator = sdk.to_managed_object(args[5])
+            print(":::: HumanSkillContext.setSkills -- " .. name .. " ::::")
+            local skill_list = sdk.to_managed_object(args[4])
+            local listlen = skill_list:get_size()-1
+            local g_skills = chardata_module[name].skills
 
-            local default_params = human_parameters.LVupInfoParam.DefaultParam
-            --local skill_list = custom_skill_IDs._items
-            --local skill_list_cnt = custom_skill_IDs._size-1
---[[ 
-            -- Set new character params here
-            print(":::       setHumanParameter       ::::")
-            print("::::       Human Parameters        ::::")
-            print(":::: " .. tostring(default_params.Hitpoint))
-            print(":::: " .. tostring(default_params.Stamina))
-            print(":::: " .. tostring(default_params.Attack))
-            print(":::: " .. tostring(default_params.Defence))
-            print(":::: " .. tostring(default_params.MagicAttack))
-            print(":::: " .. tostring(default_params.MagicDefence))
-            print(":::: " .. tostring(default_params.Weight))
-            print(":::: " .. tostring(default_params.Blow))
-            print(":::: " .. tostring(default_params.BlowResistance))
+            for i=0,listlen do
+                if g_skills[i] then
+                    for key,v in pairs(g_skills[i]) do
+                        local new_skill = sdk.create_instance("app.HumanCustomSkillID")
+                        new_skill.value__ = v
 
-            default_params.Hitpoint = 1000
-            default_params.Attack = 100
-            default_params.MagicAttack = 100
-            default_params.Defence = 100
-            default_params.MagicDefence = 100
- ]]
-
---[[ 
-            -- Set guard skills here
-            print("::::       Custom Skill IDs        ::::")
-            local skill_context = human:call("get_SkillContext")
-
-            for i=0,skill_list_cnt do
-                print(":::: SLOT " .. tostring(i) .. " ::::")
-                local obj = skill_list[i]
-                local value = skill_list[i].value__
-                if value>0 and job~=1 then
-                    print(":::: " .. obj:ToString())
-                    print(":::: " .. tostring(value))
-                elseif value>0 and job==1 and i==0 then
-                    print(":::: ADDING SKILL 1")
-                    skill_context:setSkill(job, 1, i)
-                    print(":::: " .. tostring(skill_context:getSkillID(job, i)))
-                elseif value>0 and job==1 and i==1 then
-                    print(":::: ADDING SKILL 9")
-                    skill_context:setSkill(job, 9, i)
-                    print(":::: " .. tostring(skill_context:getSkillID(job, i)))
+                        print(" " .. i .. " : ")
+                        print(" > " .. tostring(skill_list[i]) .. ", " .. tostring(skill_list[i].value__))
+                        print(" >> " .. key .. ", " .. v)
+                        --obj = key
+                        skill_list[i] = new_skill
+                        print(" >> " .. tostring(skill_list[i]) .. ", " .. tostring(skill_list[i].value__))
+                    end
                 end
             end
- ]]
-
---[[ 
-            local attack = damage_calculator["<Attack>k__BackingField"]
-            local m_attack = damage_calculator["<MagicAttack>k__BackingField"]
-            local r_attack = damage_calculator["<ReactionAttack>k__BackingField"]
-            local stam_attack = damage_calculator["<StaminaAttack>k__BackingField"]
-            local defense = damage_calculator["<Defence>k__BackingField"]
-            local m_defense = damage_calculator["<MagicDefence>k__BackingField"]
-            print("::::       Damage Calculator       ::::")
-            print(":::: " .. tostring(attack))
-            print(":::: " .. tostring(m_attack))
-            print(":::: " .. tostring(r_attack))
-            print(":::: " .. tostring(stam_attack))
-            print(":::: " .. tostring(defense))
-            print(":::: " .. tostring(m_defense))
-
-            attack = 1000
-            m_attack = 1000
- ]]
+            args[4] = sdk.to_ptr(skill_list)
+            local skill_list2 = sdk.to_managed_object(args[4])
+            local listlen2 = skill_list2:get_size()-1
+            for i=0,listlen2 do
+                print(" >>> " .. i .. " : " .. tostring(skill_list2[i]) .. ", " .. tostring(skill_list2[i].value__))
+            end
         end
     end
 )
-
-
-
-
-
-
-
-
+ ]]
 
 
 
@@ -498,6 +505,9 @@ local function get_oxcart_status(oid)
     local driver_regiondata = get_regionstatus(driver_char)
     local driver_params = driver_char["<Human>k__BackingField"].Parameter.LVupInfoParam.DefaultParam
 
+    local d_context_holder = driver_char:get_Context()
+    local level = d_context_holder:get_Level()
+
     print("")
     print("========== OXCART STATUS ==========")
     print("| OX and CART")
@@ -510,6 +520,7 @@ local function get_oxcart_status(oid)
     print("|----------------------------------")
     print("| DRIVER")
     print("|- ID        : " .. tostring(char_ids[driver_id]))
+    print("|- LEVEL     : " .. tostring(level))
     print("|- INVNC     : " .. tostring(driver_invinc))
     print("|- HP1       : " .. tostring(driver_regiondata.hp1))
     print("|- MAXHP1    : " .. tostring(driver_regiondata.maxhp1))
@@ -518,15 +529,15 @@ local function get_oxcart_status(oid)
     print("|- MAXHP2    : " .. tostring(driver_regiondata.maxhp2))
     print("|- OLDHP2    : " .. tostring(driver_regiondata.oldhp2))
     print("|----------------------------------")
-    print("|- P.Hitpoint: " .. tostring(driver_params.Hitpoint))
-    print("|- P.Stamina : " .. tostring(driver_params.Stamina))
+    --print("|- P.Hitpoint: " .. tostring(driver_params.Hitpoint))
+    --print("|- P.Stamina : " .. tostring(driver_params.Stamina))
     print("|- P.Attack  : " .. tostring(driver_params.Attack))
-    print("|- P.Defence : " .. tostring(driver_params.Defence))
+    --print("|- P.Defence : " .. tostring(driver_params.Defence))
     print("|- P.MAttack : " .. tostring(driver_params.MagicAttack))
-    print("|- P.MDefence: " .. tostring(driver_params.MagicDefence))
-    print("|- P.Weight  : " .. tostring(driver_params.Weight))
-    print("|- P.Blow    : " .. tostring(driver_params.Blow))
-    print("|- BlowResist: " .. tostring(driver_params.BlowResistance))
+    --print("|- P.MDefence: " .. tostring(driver_params.MagicDefence))
+    --print("|- P.Weight  : " .. tostring(driver_params.Weight))
+    --print("|- P.Blow    : " .. tostring(driver_params.Blow))
+    --print("|- BlowResist: " .. tostring(driver_params.BlowResistance))
     --print("|- GUARD     : " .. tostring(driver_regiondata.guard))
     --print("|- HPROOT    : " .. tostring(driver_regiondata.hproot))
     --print("|- DMG THRESH: " .. tostring(driver_regiondata.threshold))
@@ -546,7 +557,10 @@ local function get_oxcart_status(oid)
             else
                 local guard_char = _NPCManager:getCharacter(guard_id)
                 local guard_params = guard_char["<Human>k__BackingField"].Parameter.LVupInfoParam.DefaultParam                local guard_regiondata = get_regionstatus(guard_char)
+                local g_context_holder = guard_char:get_Context()
+                local level = g_context_holder:get_Level()
                 print("|- ID        : " .. tostring(char_ids[guard_id]))
+                print("|- LEVEL     : " .. tostring(level))
                 print("|- INVNC     : " .. tostring(guard_char["<Hit>k__BackingField"]["<IsInvincible>k__BackingField"]))
                 print("|- HP1       : " .. tostring(guard_regiondata.hp1))
                 print("|- MAXHP1    : " .. tostring(guard_regiondata.maxhp1))
@@ -555,15 +569,15 @@ local function get_oxcart_status(oid)
                 print("|- MAXHP2    : " .. tostring(guard_regiondata.maxhp2))
                 print("|- OLDHP2    : " .. tostring(guard_regiondata.oldhp2))
                 print("|----------------------------------")
-                print("|- P.Hitpoint: " .. tostring(guard_params.Hitpoint))
-                print("|- P.Stamina : " .. tostring(guard_params.Stamina))
+                --print("|- P.Hitpoint: " .. tostring(guard_params.Hitpoint))
+                --print("|- P.Stamina : " .. tostring(guard_params.Stamina))
                 print("|- P.Attack  : " .. tostring(guard_params.Attack))
-                print("|- P.Defence : " .. tostring(guard_params.Defence))
+                --print("|- P.Defence : " .. tostring(guard_params.Defence))
                 print("|- P.MAttack : " .. tostring(guard_params.MagicAttack))
-                print("|- P.MDefence: " .. tostring(guard_params.MagicDefence))
-                print("|- P.Weight  : " .. tostring(guard_params.Weight))
-                print("|- P.Blow    : " .. tostring(guard_params.Blow))
-                print("|- BlowResist: " .. tostring(guard_params.BlowResistance))
+                --print("|- P.MDefence: " .. tostring(guard_params.MagicDefence))
+                --print("|- P.Weight  : " .. tostring(guard_params.Weight))
+                --print("|- P.Blow    : " .. tostring(guard_params.Blow))
+                --print("|- BlowResist: " .. tostring(guard_params.BlowResistance))
 
                 --print("|- GUARD     : " .. tostring(guard_regiondata.guard))
                 --print("|- HPROOT    : " .. tostring(guard_regiondata.hproot))

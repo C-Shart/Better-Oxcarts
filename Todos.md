@@ -1,21 +1,28 @@
 ## NOW
 + User configurability
     + UI
-+ BUG: Game loads same oxcart & guards
-    + Find a way to refresh the cart. Finding this should enable me to also allow cart configuration
-+ BUG: Wandering too far from cart makes cart fall apart & disappear.i
++ Guard buffs
+    + ~~Change equipment~~
+        + Add items to inventories (special arrows > archers)
+    + ~~Change abilities~~
+    + ~~Buff stats~~
+    + Logic to change equipment based on tables
+    + Configurable
++ BUG: Wandering too far from cart makes cart fall apart & disappear.
     + Making the cart truly invincible & unbroken should resolve this
     + Also ensuring the cart is fresh when loaded
-+ (configurable) Guard buffs (advanced abilities, buffed stats, better equipment)
-    + Equip and stat tables
-    + Logic to change equipment based on tables
 
 ## SOON
-+ (configurable) Faster ox
-+ (configurable) Ox buffs (buffed stats)
++ Faster ox
+    + Configurable
++ Ox buffs
+    + Buffed stats
+    + Configurable
 + Double-check and test against oxcart quests
     + Tension on the High Road (Raghnall)
     + Phantom Oxcart
+    + early game, ride oxcart to deliver letter
+    + opening game, ride oxcart with whatshisname
  
 ## LATER
 + Driver behavior alteration (join fights, add player classes/abilities)
@@ -29,10 +36,10 @@
 + Get info 
  
 ### DONE
-+ BUG: Sm_80_042_Parts not completely being set invincible yet
-    + Find way to iterate through the current cart's PartsList
-    + Turned out PartsList isn't necessary as of yet, but I do know how to iterate through it now if needed
-+ Adding weapons
++ BUG: Game loads same oxcart & guards
+    + Find a way to refresh the cart. Finding this should enable me to also allow cart configuration
+    + Closed, by design. The game only has so many carts and guards.
+
 
 ### SPECIAL THANKS
 + EXXXcellent, Nickesponja, shadowcookie, [], for all the help and advice
@@ -42,6 +49,19 @@
 
 
 ### NOTES
+
+app.HumanEnemyController
+    :getCombatParam(app.Character, app.HumanEnemyController.HumanType, app.Character.JobEnum) (ret CommonHitParam)
+    :applyStatus(app.HumanEnemyParameterBase, app.HumanEnemyParameterBase, app.DamageCalculator)
+
+
+app.CommonHitParam
+    .RegionData[]
+
+app.RegionStatusData
+
+
+app.RegionStatusData
 
 app.HumanEnemyManager
     get_DefaultNPCCombatParameter()
@@ -533,14 +553,6 @@ app.Character
     get_ReducedHpRate()
     get_OriginalMaxHp()
     get_ElapsedSecond()
-    get_IsDrawedWeapon()
-        set_IsDrawedWeapon(System.Boolean)
-    get_RightWeapon()
-    get_RightWeaponID()
-    get_IsEquipRightWeapon()
-    get_LeftWeapon()
-    get_IsEquipLeftWeapon()
-    get_IsEquipRightWeapon()
     setInputProcessor(app.CharacterInputProcessor)
     setActionSelector(app.CharacterCommonActionSelector)
     isKindOf(app.Character.CharacterKindEnum)
