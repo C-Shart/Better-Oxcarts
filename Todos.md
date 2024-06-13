@@ -6,18 +6,18 @@
         + Add items to inventories (special arrows > archers)
     + ~~Change abilities~~
     + ~~Buff stats~~
-    + Logic to change equipment based on tables
+    + ~~Logic to change equipment based on tables~~
     + Configurable
 + BUG: Wandering too far from cart makes cart fall apart & disappear.
     + Making the cart truly invincible & unbroken should resolve this
     + Also ensuring the cart is fresh when loaded
-
-## SOON
 + Faster ox
     + Configurable
 + Ox buffs
     + Buffed stats
     + Configurable
+
+## SOON
 + Double-check and test against oxcart quests
     + Tension on the High Road (Raghnall)
     + Phantom Oxcart
@@ -29,7 +29,7 @@
 + Driver appearance alteration (glowing eyes in combat, see about using the Medusa glare for this)
 + Driver BGM (nuDoom music plays when drivers get into fight)
 + Option - much faster cart outside of combat, play yakety sax
-+ Immersive changes
++ Immersive (lore-friendly~) changes
     + Melve Fighter (300802) to Warrior after Warrior maister quest
     + V-C Fighter % chance to be Warrior? Just make him a warrior?
     + Bakbattahl guard equip gets dwarven infusion after Sara quest
